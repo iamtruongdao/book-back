@@ -1,0 +1,15 @@
+@back_HostAddress = http://localhost:5174/api
+
+POST   {{back_HostAddress}}/products
+
+Content-Type: application/json 
+
+{
+    "product_shop":"66fcf384bab5687abe5b2202",
+    "product_name":"tu lanh",
+    "product_price":10000000,
+    "product_quantity":10,
+    "product_brand":"samsung",
+    "product_rating":"4.5"
+}
+###
