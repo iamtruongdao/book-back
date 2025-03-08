@@ -15,9 +15,10 @@ namespace back.models
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
         [BsonRepresentation(BsonType.ObjectId)]
-        public string? UserId { get; set; } 
+        public string? UserId { get; set; }
         public List<CartProductItem>? CartProduct { get; set; }
         public int CartCountProduct { get; set; }
+        public decimal TotalPrice { get; set; }
     }
     public class CartProductItem
     {

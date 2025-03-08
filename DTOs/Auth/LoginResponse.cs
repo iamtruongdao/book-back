@@ -11,7 +11,8 @@ namespace back.DTOs.User
         public bool Success { get; set; }
         public string? Message { get; set; }
         public AuthenticateResponse? token { get; set; }
-        public string? Email { get; set; }
-        public string? UserId { get; set; }
+
+        public UserResponse? UserAccount { get; set; }
+        public List<string>? Roles { get; set; }
     }
 }

@@ -13,10 +13,13 @@ namespace back.services
     public interface IProductService
     {
         public  Task<CreateProductDTO?> AddProduct( CreateProductDTO product);
+        public  Task<List<CreateProductDTO>?> AddProductMany( List<CreateProductDTO> product);
         public Task<DeleteResult> DeleteProduct(string id);
         public Task<ReplaceOneResult> UpdateProduct( UpdateProductDTO product);
-        public Task<Product?> GetProduct(string id);
+        public Task<ProductDTO> GetProduct(string id);
+        public Task<Product?> GetProductById(string id);
         public Task<List<Product>> GetAllProduct();
-        public Task<PaginatedList<Product>> GetAllFilter(string sortOrder,string currentFilter,string searchString,int? pageNumber,int pageSize );
+        public Task<List<Product>> GetSliderProduct(int limit);
+        public Task<PaginatedList<ProductDTO>> GetAllFilter(string sortOrder,string currentFilter,string searchString,string category,int pageNumber,int pageSize,decimal minPrice,decimal maxPrice );
     }
 }

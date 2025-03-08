@@ -12,11 +12,20 @@ using System.Text;
 using Microsoft.IdentityModel.Logging;
 using MongoDB.Bson;
 using back.Viewmodel;
+using System.Text.Json;
+using back.services.Categories;
+using System.Text.Json.Serialization;
+using back.services.Email;
+using BackEnd.services.VNPay;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -58,7 +67,7 @@ builder.Services.AddSwaggerGen(c =>
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(MyAllowSpecificOrigins,policy =>{policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod();});
+    options.AddPolicy(MyAllowSpecificOrigins,policy =>{policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();});
 });
 
 //Mapper
@@ -68,14 +77,18 @@ builder.Services.Configure<jwtOptions>(builder.Configuration.GetSection("jwtOpti
 //mongoDb setting
 var mongoDbSettings = builder.Configuration.GetSection("MongoDb").Get<MongoDbSetting>();
 builder.Services.Configure<MongoDbSetting>(builder.Configuration.GetSection("MongoDb"));
+// Email
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddSingleton<MongoDbSetting>(sp => sp.GetRequiredService<IOptions<MongoDbSetting>>().Value);
 builder.Services.AddSingleton<IMongoClient>(s => new MongoClient(mongoDbSettings?.ConnectionURI));
 //Authentication
 IdentityModelEventSource.ShowPII = true;
-builder.Services.AddIdentityMongoDbProvider<User,Role,ObjectId>(
-    identity =>
+builder.Services.AddIdentityMongoDbProvider<User, Role, ObjectId>(
+    opt =>
     {
-        identity.Password.RequiredLength = 8;
+        opt.Password.RequiredLength = 8;
+        opt.User.AllowedUserNameCharacters = null!;
+        opt.User.RequireUniqueEmail = true;
         // other optio
     },
     mongo =>
@@ -84,6 +97,7 @@ builder.Services.AddIdentityMongoDbProvider<User,Role,ObjectId>(
         // other options
     }
 ).AddUserManager<UserManager<User>>().AddRoleManager<RoleManager<Role>>().AddSignInManager<SignInManager<User>>().AddDefaultTokenProviders();
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -98,36 +112,55 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = builder.Configuration["jwtOptions:Audience"],
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true, 
+             ClockSkew = TimeSpan.Zero,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["jwtOptions:SecretKey"]!)),
     };
-    opts.Events = new JwtBearerEvents
-    {
-      OnAuthenticationFailed = context =>
-      {
-           if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
-                {
-                    context.Response.StatusCode = StatusCodes.Status410Gone;
-                    context.Response.ContentType = "application/json";
-                    return context.Response.WriteAsJsonAsync(new
-                    {
-                        Error = "TokenExpired",
-                        Message = "Your token has expired. Please refresh your token.",
-                        ExpiredAt = ((SecurityTokenExpiredException)context.Exception).Expires
-                    });
-                }
-          return Task.CompletedTask;
-      },
-    };
+    // opts.Events = new JwtBearerEvents
+    // {
+    
+    //     OnChallenge = async context =>
+    //     {
+    //         // context.HandleResponse();
+    //         // if (context.AuthenticateFailure is SecurityTokenExpiredException expiredException)
+    //         // {
+    //         //     context.Response.StatusCode = StatusCodes.Status410Gone;
+    //         //     context.Response.ContentType = "application/json";
+    //         //     var result = JsonSerializer.Serialize(new
+    //         //     {
+    //         //         Error = "TokenExpired",
+    //         //         Message = "Your token has expired. Please refresh your token.",
+    //         //         ExpiredAt = expiredException.Expires
+    //         //     });
+    //         //     await context.Response.WriteAsync(result);
+    //         // }
+    //         // else
+    //         // {
+    //             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+    //             context.Response.ContentType = "application/json";
+    //             var result = JsonSerializer.Serialize(new
+    //             {
+    //                 Error = "Unauthorized",
+    //                 Message = "Authentication failed."
+    //             });
+    //             await context.Response.WriteAsync(result);
+    //         }
+    //         // }
+    // };
 });
 // DI for services
 builder.Services.AddHostedService<ConfigureMongoDbIndexesService>();
-builder.Services.AddSingleton<ICloundinaryService,CloudinaryService>();
+builder.Services.AddSingleton<ICloundinaryService, CloudinaryService>();
+builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ICartServices, CartService>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddScoped<ICategoriesService, CategoryService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IVNPayService, VNPayService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -150,7 +183,6 @@ app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Swagger Course Management V1");
 });
-
 app.UseCors(MyAllowSpecificOrigins);
 app.MapControllers();
 app.UseAuthentication();

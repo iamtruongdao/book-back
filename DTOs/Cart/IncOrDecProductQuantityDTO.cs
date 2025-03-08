@@ -10,8 +10,12 @@ namespace back.DTOs.Cart
     {
         [Required]
         public string? UserId { get; set; }
-        public string?  ProductId  { get; set; }
-        public int  OldQuantity  { get; set; }
-        public int  Quantity  { get; set; }
+        [Required]
+        public string? ProductId { get; set; }
+        [Required]
+        public int OldQuantity { get; set; }
+        [Required]
+        
+        public int Quantity { get; set; }
     }
 }

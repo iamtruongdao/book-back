@@ -28,6 +28,12 @@ namespace back.controllers
             var createdAuthor = await _authorService.AddAuthor(author);
             return createdAuthor is null ? BadRequest("Author is invalid") : CreatedAtAction("GetAuthor", new {slug = createdAuthor.Slug}, createdAuthor);
         }
+         [HttpPost("all")]
+        public async Task<ActionResult> AddAuthorMany([FromBody] List<CreateAuthorDTO> author)
+        {
+            var createdAuthor = await _authorService.AddAuthorMany(author);
+            return Ok(new {EC = 0, authors = createdAuthor});
+        }
         [HttpGet]
         [ProducesResponseType (200)]
         public async Task<ActionResult<IEnumerable<Author>>> GetAllAuthor()
@@ -35,7 +41,14 @@ namespace back.controllers
             var authors = await _authorService.GetAllAuthor();
             return Ok(new {EC = 0, authors = authors});
         }
-        [HttpDelete("{id}:length(24)")]
+        [HttpGet("string")]
+        [ProducesResponseType (200)]
+        public async Task<ActionResult> GetStrings()
+        {
+            var authors = await _authorService.GetStrings();
+            return Ok(new {EC = 0, authors = authors});
+        }
+        [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteAuthor(string id)
         {
             var authors = await _authorService.DeleteAuthor(id);
@@ -49,13 +62,11 @@ namespace back.controllers
             return Ok(new {EC = 0, authors = authors});
         }
         [HttpGet("{slug}")]
-        public async Task<ActionResult<Product>> GetAuthor( string slug)
+        public async Task<ActionResult<Author>> GetAuthor(string slug)
         {
             var author = await _authorService.GetAuthor(slug);
             return author is null ? NotFound("author not found") : Ok(new {EC = 0,msg = "ok", author = author});
         }
-        
-       
         [HttpGet("paginate")]
         public async Task<ActionResult<PaginatedList<Author>>> GetAllFilter([FromQuery] string? sortOrder, string? currentFilter, string? searchString, int pageNumber, int? pageSize)
         {

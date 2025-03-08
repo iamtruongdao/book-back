@@ -14,7 +14,7 @@ namespace back.models
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
-        public string AuthorName { get; set; } = string.Empty;
+        public string? AuthorName { get; set; } 
         public string? Avatar {get;set;} 
         public string? AuthorDescription { get; set; } 
         public string? Slug {get;set;}

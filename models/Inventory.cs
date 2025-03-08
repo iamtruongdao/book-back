@@ -11,9 +11,19 @@ namespace back.models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string? Id { get; set; } 
-        public int stock { get; set; }
-        public ObjectId product_id;
-        public BsonArray? reserved { get; set; } 
+        public string? Id { get; set; }
+        public int Stock { get; set; }
+        public string Location { get; set; } = "unKnown";
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? ProductId { get; set; }
+        public List<InvenReservation> Reservation { get; set; } = new List<InvenReservation>();
+    }
+
+    public class InvenReservation
+    {
+        public int Quantity { get; set; }
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? CartId { get; set; }
+        public DateTime CreateOn { get; set; }
     }
 }

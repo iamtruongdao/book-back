@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using back.DTOs.Cart;
 using back.models;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 namespace back.services
@@ -55,23 +57,79 @@ namespace back.services
             var update = Builders<Cart>.Update.AddToSet<CartProductItem>("CartProduct", product.CartItem);
             return await _cart.FindOneAndUpdateAsync(filter, update);
         }
-        public async Task<UpdateResult> DeleteCart(DeleteItemDTO product)
+        public async Task<Cart> DeleteCart(DeleteItemDTO product)
         {
-            Console.WriteLine(product.UserId + " " + product.ProductId);
             var filter = Builders<Cart>.Filter.Eq(c => c.UserId,product.UserId);
             var updateSet = Builders<Cart>.Update.PullFilter(c => c.CartProduct,p => p.ProductId == product.ProductId );
-            return await _cart.UpdateOneAsync(filter, updateSet);
+            return await _cart.FindOneAndUpdateAsync(filter, updateSet);
         }
 
-        public Task<Cart> GetCart(string user_id)
+        public IEnumerable<CartResponse> GetCart(string user_id)
         {
-            throw new NotImplementedException();
+            var cartList = _cart.Aggregate().Match(Builders<Cart>.Filter.Eq(c => c.UserId,user_id)).Lookup("Products", "CartProduct.ProductId", "_id", "ProductDetails").Project(BsonDocument.Parse(@"{
+                _id:{$toString:'$_id'},
+                UserId:{$toString:'$UserId'},
+                CartProduct: {
+                $map: {
+                    input: '$CartProduct',
+                    as: 'cartItem',
+                    in: {
+                        ProductId: {$toString:'$$cartItem.ProductId'},
+                        Quantity: '$$cartItem.Quantity',
+                        ProductDetails: {
+                        $let: {
+                            vars: {
+                                product: {
+                                    $arrayElemAt: [
+                                        {
+                                            $filter: {
+                                                input: '$ProductDetails',
+                                                as: 'product',
+                                                cond: { $eq: ['$$product._id', '$$cartItem.ProductId'] }
+                                            }
+                                        },
+                                        0
+                                    ]
+                                }
+                            },
+                            in: {
+                                ProductName: '$$product.ProductName',
+                                ProductPrice: '$$product.ProductPrice',
+                                Discount: {$divide:[
+                                    {
+                                        $multiply:['$$product.ProductPrice','$$product.Discount']
+                                    },100]
+                                },
+                                Avatar: '$$product.Avatar',
+                                Slug: '$$product.Slug',
+                            }
+                        }
+                    }
+                    }
+                }
+            }
+            }")).ToList();
+            var cartRes = cartList.Select(doc => BsonSerializer.Deserialize<CartResponse>(doc));
+            return cartRes;
         }
 
         public async Task<Cart> IncOrDecProductQuantity(IncOrDecProductQuantityDTO product)
         {
-            return await this.UpdateUserCartQuantity(new AddProductToCartDTO { UserId = product.UserId,
-            CartItem = new CartProductItem{ProductId = product.ProductId,Quantity = product.Quantity - product.OldQuantity}});
+            if (product.Quantity == 0) return  await this.DeleteCart(new DeleteItemDTO
+            {
+                UserId = product.UserId!,
+                ProductId = product.ProductId!
+            });
+            return await this.UpdateUserCartQuantity(new AddProductToCartDTO
+            {
+                UserId = product.UserId,
+                CartItem = new CartProductItem { ProductId = product.ProductId, Quantity = product.Quantity - product.OldQuantity }
+            });
+        }
+
+        public async Task<Cart> FindById(string Id)
+        {
+            return await _cart.Find(x => x.Id == Id).FirstOrDefaultAsync();
         }
     }
 }

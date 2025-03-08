@@ -11,8 +11,7 @@ namespace back.DTOs.User
         [Required, EmailAddress]
         public string? Email { get; set; }
         public string? FullName { get; set; }
-        [Required]
-        public string? UserName { get; set; }
+        public string? Name { get; set; }
         [Required, DataType(DataType.Password)]
         public string? Password { get; set; }
         [Required, DataType(DataType.Password),Compare(nameof(Password),ErrorMessage = "Password and Confirm Password do not match")]

@@ -82,8 +82,16 @@ namespace back.services
             return new PaginatedList<Author>(author,(int)totalPage,pageNumber ?? 1,pageSize );
         }
 
-     
-      
+        public async Task<List<CreateAuthorDTO>?> AddAuthorMany(List<CreateAuthorDTO> author)
+        {
+            await _authors.InsertManyAsync(_mapper.Map<List<Author>>(author));
+            return author;
+        }
+
+        public async Task<List<string?>> GetStrings()
+        {
+            return await _authors.Find(x => true).Project(x => x.Id).ToListAsync();
+        }
     }
   
 }

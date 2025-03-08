@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using back.DTOs.Cart;
 using back.models;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace back.services
@@ -16,7 +17,8 @@ namespace back.services
         public Task<Cart> AddProductToCart(AddProductToCartDTO product);
         public Task<Cart> AddProductToCartExist(AddProductToCartDTO product);
         public Task<Cart> IncOrDecProductQuantity(IncOrDecProductQuantityDTO product);
-        public Task<Cart> GetCart( string user_id);
-        public Task<UpdateResult> DeleteCart( DeleteItemDTO product);
+        public IEnumerable<CartResponse> GetCart( string user_id);
+        public Task<Cart> DeleteCart( DeleteItemDTO product);
+        public Task<Cart> FindById( string Id);
     }
 }
