@@ -132,7 +132,7 @@ namespace back.services
         {
             var claimsPrincipal = _tokenService.GetPrincipalFromExpiredToken(token);
             var newAccessToken = _tokenService.GenerateAccessToken(claimsPrincipal.Claims);
-            var newRefreshToken = _tokenService.GenerateAccessToken(claimsPrincipal.Claims);
+            var newRefreshToken = _tokenService.GenerateRefreshToken(claimsPrincipal.Claims);
             return new AuthenticateResponse
             {
                 AccessToken = newAccessToken,

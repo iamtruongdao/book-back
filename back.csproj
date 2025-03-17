@@ -19,6 +19,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="MongoDB.Driver" Version="3.1.0" />
     <PackageReference Include="MongoDB.EntityFrameworkCore" Version="8.2.1" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageReference Include="Slugify" Version="0.1.0.20570" />
   </ItemGroup>
 

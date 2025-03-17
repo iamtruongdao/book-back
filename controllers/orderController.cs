@@ -41,20 +41,12 @@ namespace back.controllers
             }
         }
         [HttpPost("add")]
-        [Authorize]
+        // [Authorize]
         public async Task<ActionResult> AddOrder([FromBody] AddOrderDTO data)
         {
-            try
-            {
-                var res = await _orderService.AddOrder(data);
-                if (res.IsCreated) return Ok(new {data = res } );
-                return BadRequest(new {data = res});
-            }
-            catch (System.Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-
+            var res = await _orderService.AddOrder(data);
+            if (res.IsCreated) return Ok(new {data = res } );
+            return Ok(new { message = res.Message });  
         }
         [HttpGet("user")]
         public async Task<ActionResult> GetOrder()

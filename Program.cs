@@ -17,8 +17,11 @@ using back.services.Categories;
 using System.Text.Json.Serialization;
 using back.services.Email;
 using BackEnd.services.VNPay;
+using BackEnd.Middleware;
+using Serilog;
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Logging.ClearProviders(); // Xóa tất cả các logger mặc định
+builder.Logging.AddConsole(); 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -28,7 +31,12 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-
+// log
+builder.Host.UseSerilog((context, configuration) =>
+{
+    configuration
+        .WriteTo.Console();
+});
 // Swagger
 builder.Services.AddSwaggerGen(c =>
 {
@@ -67,7 +75,7 @@ builder.Services.AddSwaggerGen(c =>
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(MyAllowSpecificOrigins,policy =>{policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();});
+    options.AddPolicy(MyAllowSpecificOrigins,policy => policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 });
 
 //Mapper
@@ -81,6 +89,7 @@ builder.Services.Configure<MongoDbSetting>(builder.Configuration.GetSection("Mon
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddSingleton<MongoDbSetting>(sp => sp.GetRequiredService<IOptions<MongoDbSetting>>().Value);
 builder.Services.AddSingleton<IMongoClient>(s => new MongoClient(mongoDbSettings?.ConnectionURI));
+builder.Services.AddScoped<ErrorMiddleware>();
 //Authentication
 IdentityModelEventSource.ShowPII = true;
 builder.Services.AddIdentityMongoDbProvider<User, Role, ObjectId>(
@@ -168,6 +177,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+app.UseMiddleware<ErrorMiddleware>();
 
 app.UseHttpsRedirection();
 // app.Use(async (context, next) =>
@@ -185,6 +195,7 @@ app.UseSwaggerUI(c =>
 });
 app.UseCors(MyAllowSpecificOrigins);
 app.MapControllers();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.Run();

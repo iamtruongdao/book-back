@@ -6,6 +6,7 @@ using back.DTOs.Cart;
 using back.DTOs.Order;
 using back.models;
 using BackEnd.DTOs.Order;
+using BackEnd.Exceptions;
 using Microsoft.AspNetCore.Server.IIS; 
 using MongoDB.Driver;
 
@@ -34,7 +35,7 @@ namespace back.services
             foreach (var element in orderProduct)
             {
                 var modify = await _inventoryService.ReservationInventory(element.Item!.ProductId!, data.Checkout.CartId, element.Item.Quantity);
-                if (modify.ModifiedCount == 0) throw new Exception("1 so san pham bi loi please dat hang lai");
+                if (modify.ModifiedCount == 0) throw new BadRequestException("1 so san pham bi loi please dat hang lai");
             }
             orderCheckout.TotalApplyDiscount += data.FeeShip;
             orderCheckout.FeeShip += data.FeeShip;
@@ -85,7 +86,7 @@ namespace back.services
             foreach (var item in items)
             {
                 var product = await _productService.GetProductById(item.ProductId!);
-                if (product is null) throw new Exception("product not found");
+                if (product is null) throw new BadRequestException("product not found");
                 var price = product.ProductPrice * item.Quantity;
                 totalPrice += price;
                 if (product.Discount != 0)

@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using back.DTOs.Cart;
 using back.models;
+using BackEnd.Repository;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
@@ -14,9 +15,12 @@ namespace back.services
     public class CartService : ICartServices
     {
         private readonly IMongoCollection<Cart> _cart;
-        public CartService(IMongoClient client,MongoDbSetting setting) {
+        private readonly ICartRepository _cartRepo;
+        public CartService(IMongoClient client, MongoDbSetting setting, ICartRepository cartRepo)
+        {
             var database = client.GetDatabase(setting.DatabaseName);
             _cart = database.GetCollection<Cart>("Carts");
+            _cartRepo = cartRepo;
         }
         public async  Task<Cart> AddProductToCart(AddProductToCartDTO product)
         {
