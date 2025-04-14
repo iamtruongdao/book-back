@@ -31,11 +31,12 @@ namespace back.models
         [BsonRepresentation(BsonType.DateTime)]
         public DateTime PublicDate { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
+        [BsonRepresentation(BsonType.Boolean)]
+
         public bool IsPublic { get; set; } = false;
         [BsonRepresentation(BsonType.ObjectId)]
         public List<string>? Cat { get; set; }
-
+        public int Sold { get; set; }
         public string? Avatar { get; set; } 
 
         [BsonRepresentation(BsonType.ObjectId)]

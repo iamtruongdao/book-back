@@ -1,32 +1,41 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using back.DTOs.Cart;
 using back.DTOs.Order;
 using back.models;
 using BackEnd.DTOs.Order;
 using BackEnd.Exceptions;
+using BackEnd.Repository;
+using BackEnd.services.Ship;
 using Microsoft.AspNetCore.Server.IIS; 
 using MongoDB.Driver;
+
 
 namespace back.services
 {
     public class OrderService : IOrderService
     {
-        private readonly IMongoCollection<Order> _order;
-        private readonly ICartServices _cartService;
+        private readonly IOrderRepository _orderRepo;
+        private readonly ICartRepository _cartRepo;
+        private readonly IProductRepository _productRepo;
+        private readonly IShipService _shipService;
+     
 
-        private readonly IProductService _productService;
+        
         private readonly IInventoryService _inventoryService;
-        public OrderService(IMongoClient client, MongoDbSetting setting, IProductService productService, IInventoryService inventoryService, ICartServices cartServices)
+        public OrderService(ICartRepository cartRepo, IInventoryService inventoryService, IOrderRepository orderRepo, IProductRepository productRepo, IShipService shipService)
         {
-            var db = client.GetDatabase(setting.DatabaseName);
-            _order = db.GetCollection<Order>("Orders");
-            _productService = productService;
             _inventoryService = inventoryService;
-            _cartService = cartServices;
+            _orderRepo = orderRepo;
+            _cartRepo = cartRepo;
+            _productRepo = productRepo;
+            _shipService = shipService;
         }
+     
 
 
         public async Task<AddOrderResponse> AddOrder(AddOrderDTO data)
@@ -37,7 +46,6 @@ namespace back.services
                 var modify = await _inventoryService.ReservationInventory(element.Item!.ProductId!, data.Checkout.CartId, element.Item.Quantity);
                 if (modify.ModifiedCount == 0) throw new BadRequestException("1 so san pham bi loi please dat hang lai");
             }
-            orderCheckout.TotalApplyDiscount += data.FeeShip;
             orderCheckout.FeeShip += data.FeeShip;
             var order = new Order
             {
@@ -45,19 +53,14 @@ namespace back.services
                 OrderCheckout = orderCheckout,
                 UserId = data.Checkout.UserId,
                 OrderItem = orderProduct,
-                OrderPayment = data.OrderPayment == PAYMENT.COD.ToString() ? PAYMENT.COD : PAYMENT.ONLINE,
+                OrderPayment = data.OrderPayment == PAYMENT.COD.ToString() ? PAYMENT.COD : PAYMENT.VNPAY,
             };
-            await _order.InsertOneAsync(order);
+            await _orderRepo.Insert(order);
             if (!String.IsNullOrEmpty(order.Id))
             {
                 foreach (var item in orderProduct)
                 {
-                    await _cartService.DeleteCart(new DeleteItemDTO
-                    {
-                        ProductId = item.Item!.ProductId!,
-                        UserId = data.Checkout.UserId
-                    });
-
+                    await _cartRepo.DeleteCart(data.Checkout.UserId!, item.Item!.ProductId!);
                 }
                 return new AddOrderResponse
                 {
@@ -77,15 +80,15 @@ namespace back.services
 
         public async Task<(OrderCheckout, List<OrderProduct>)> Checkout(CheckoutDTO checkout)
         {
-            var cart = _cartService.FindById(checkout.CartId);
-            if (cart is null) throw new Exception("cart is not exists");
+            var cart = _cartRepo.FindById(checkout.CartId);
+            if (cart is null) throw new NotFoundException("cart is not exists");
             decimal totalPrice = 0, totalApplyDiscount = 0, feeShip = 0;
             float amount = 0, totalAmount = 0;
             var items = checkout.Items!;
             List<OrderProduct> listOrder = new List<OrderProduct>();
             foreach (var item in items)
             {
-                var product = await _productService.GetProductById(item.ProductId!);
+                var product = await _productRepo.FindById(item.ProductId!);
                 if (product is null) throw new BadRequestException("product not found");
                 var price = product.ProductPrice * item.Quantity;
                 totalPrice += price;
@@ -118,41 +121,47 @@ namespace back.services
             }, listOrder);
         }
 
-        public object DashBoard()
+        public List<DashBoardResponse> DashBoard()
         {
-            var orderList = _order.AsQueryable().GroupBy(x => x.OrderStatus).Select(g => new
-            {
-                Status = g.Key,
-                Count = g.Count()
-            });
-            return orderList;
+            return _orderRepo.GetOrderStatusCount();
         }
+
+        
 
         public async Task<List<Order>> GetOrder()
         {
-            return await _order.Find(x => true).ToListAsync();
+            return await _orderRepo.GetOrder();
         }
         public async Task<Order> GetOrderById(string id)
         {
-            return await _order.Find(x => x.Id == id).FirstOrDefaultAsync();
+            return await _orderRepo.GetOrderById(id);
         }
 
         public async Task SaveLinkPayment(string id, string link)
         {
-            await _order.UpdateOneAsync(x => x.Id == id, Builders<Order>.Update.Set(x => x.LinkPayment, link));
+            await _orderRepo.Update(id, x => x.LinkPayment, link);
         }
 
         public async Task<Order> UpdateStatus(UpdateStatusDTO data)
         {
-            var filter = Builders<Order>.Filter.Eq(x => x.Id, data.OrderId);
-            var update = Builders<Order>.Update.Set(x => x.OrderStatus, OrderState.Confirmed);
-            return await _order.FindOneAndUpdateAsync(filter, update);
+            var order = await _orderRepo.GetOrderById(data.OrderId!);
+            if(order == null) throw new NotFoundException("Order not found");
+            decimal amout = 0;
+            if(order.OrderPayment == PAYMENT.COD)
+            {
+                amout = order.OrderCheckout!.TotalApplyDiscount + order.OrderCheckout.FeeShip;
+            }
+            var res = await _shipService.createOrder(amout, order.OrderAddress!.FullName!, order.OrderAddress.PhoneNumber!, order.OrderAddress!.Address!, order.OrderAddress!.Street!, order.OrderAddress!.District!, order.OrderAddress.City!, order.OrderCode!);
+            if (res.Code == 200)
+            {
+                await _orderRepo.UpdateStatus(data.OrderId!, OrderState.Confirmed);
+            }
+            return order;
         }
         public async Task<Order> UpdateStatusPayment(string Id)
         {
-            var filter = Builders<Order>.Filter.Eq(x => x.Id , Id);
-            var update = Builders<Order>.Update.Set(x => x.OrderStatus,OrderState.Paid);
-            return await _order.FindOneAndUpdateAsync(filter, update);
+            return await _orderRepo.UpdateStatus(Id, OrderState.Paid);
+
         }
     }
 }

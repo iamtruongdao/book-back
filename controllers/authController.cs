@@ -8,8 +8,10 @@ using back.DTOs.User;
 using back.models;
 using back.services;
 using BackEnd.DTOs.Auth;
+using BackEnd.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 
 namespace back.controllers
 {
@@ -28,7 +30,30 @@ namespace back.controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var result = await _authService.Login(request);
-            return result.Success ? Ok(result) : BadRequest(result);
+            Response.Cookies.Append("act", result.token!.AccessToken!,new CookieOptions
+            {
+                Expires = DateTime.Now.AddDays(7),
+                Secure = true,
+                IsEssential = true,
+                SameSite = SameSiteMode.None
+
+            });
+            Response.Cookies.Append("rft", result.token!.RefreshToken!,new CookieOptions
+            {
+                Expires = DateTime.Now.AddDays(7),
+                HttpOnly = true,
+                Secure = true,
+                IsEssential = true,
+                SameSite = SameSiteMode.None
+            });
+            return Ok(result);
+        }
+        [HttpPost("logout")]
+        public ActionResult Logout()
+        {
+            Response.Cookies.Delete("act");
+            Response.Cookies.Delete("rft");
+            return Ok(new {Code = 0, message = "logout success" });
         }
         [HttpPost("register")]
         [ProducesResponseType((int)HttpStatusCode.OK, Type = typeof(RegisterResponse))]
@@ -39,30 +64,51 @@ namespace back.controllers
             return result.Success ? Ok(result) : BadRequest(result);
         }
         [HttpPost("refreshToken")]
-        public ActionResult<AuthenticateResponse> RefreshToken([FromBody] RefreshTokenRequest request)
+        public ActionResult<AuthenticateResponse> RefreshToken()
         {
-            try
+            Request.Cookies.TryGetValue("rft", out string? rft);
+            var result = _authService.RefreshToken(rft);
+            Response.Cookies.Delete("act",new CookieOptions
+           {
+            IsEssential = true,
+                Secure = true,
+                SameSite = SameSiteMode.None
+           });
+            Response.Cookies.Delete("rft", new CookieOptions
             {
-                var result = _authService.RefreshToken(request.refreshToken!);
-                return Ok(new AuthenticateResponse
-                {
-                    AccessToken = result.AccessToken,
-                    RefreshToken = result.RefreshToken
-                });
-            }
-            catch (Exception ex)
+                IsEssential = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                HttpOnly = true
+            });
+            Response.Cookies.Append("act", result.AccessToken!,new CookieOptions
             {
-                return Unauthorized(new
-                {
-                    message = ex.Message
-                });
-            }
+                Expires = DateTime.Now.AddDays(7),
+                IsEssential = true,
+                Secure = true,
+                SameSite = SameSiteMode.None
+
+            });
+            Response.Cookies.Append("rft", result.RefreshToken!,new CookieOptions
+            {
+                Expires = DateTime.Now.AddDays(7),
+                HttpOnly = true,
+                IsEssential = true,
+                Secure = true,
+                SameSite = SameSiteMode.None
+            });
+             return Ok(new AuthenticateResponse
+            {
+                AccessToken = result.AccessToken,
+                RefreshToken = result.RefreshToken
+            });
         }
         [HttpGet("get/user")]
         [Authorize]
-        public async Task<ActionResult> GetUser([FromQuery] string user_id)
+        public async Task<ActionResult> GetUser()
         {
-            var user = await _authService.GetUser(user_id);
+            var user_id = Request.HttpContext.User.FindFirst("Id")?.Value;
+            var user = await _authService.GetUser(user_id!);
             return Ok(new {userInfor = user });
         }
         [HttpGet("get/all-user")]

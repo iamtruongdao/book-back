@@ -9,15 +9,15 @@ namespace back.services
 {
     public interface IOrderService
     {
-   
-        public Task<(OrderCheckout, List<OrderProduct>)> Checkout(CheckoutDTO checkout);
-        public Task<AddOrderResponse> AddOrder(AddOrderDTO data);
-        public Task<Order> UpdateStatus(UpdateStatusDTO id);
-        public Task<List<Order>> GetOrder();
-        public Task<Order> GetOrderById(string id);
-        public Task<Order> UpdateStatusPayment(string id);
-        public Task SaveLinkPayment(string id,string link);
-        public object DashBoard();
+
+        Task<(OrderCheckout, List<OrderProduct>)> Checkout(CheckoutDTO checkout);
+        Task<AddOrderResponse> AddOrder(AddOrderDTO data);
+        Task<Order> UpdateStatus(UpdateStatusDTO id);
+        Task<List<Order>> GetOrder();
+        Task<Order> GetOrderById(string id);
+        Task<Order> UpdateStatusPayment(string id);
+        Task SaveLinkPayment(string id, string link);
+        List<DashBoardResponse> DashBoard();
         
     }
 }

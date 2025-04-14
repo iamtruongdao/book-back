@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using back.Viewmodel;
+using BackEnd.Exceptions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -25,7 +26,7 @@ namespace back.services
                 issuer: _jwtOptions.Issuer,
                 audience: _jwtOptions.Audience,
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(60),
+                expires: DateTime.UtcNow.AddMinutes(60),
                 signingCredentials: signinCredentials
             );
             var tokenString = new JwtSecurityTokenHandler().WriteToken(tokeOptions);
@@ -40,7 +41,7 @@ namespace back.services
                 issuer: _jwtOptions.Issuer,
                 audience: _jwtOptions.Audience,
                 claims: claims,
-                expires: DateTime.Now.AddDays(7),
+                expires: DateTime.UtcNow.AddDays(7),
                 signingCredentials: signinCredentials
             );
             var tokenString = new JwtSecurityTokenHandler().WriteToken(tokeOptions);
@@ -51,6 +52,7 @@ namespace back.services
         {
             try
             {
+                
                 var tokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateAudience = true, //you might want to validate the audience and issuer depending on your use case
@@ -71,8 +73,7 @@ namespace back.services
             }
             catch (SecurityTokenExpiredException ex)
             {
-                
-                throw new Exception($"Refresh token expired at {ex.Expires}", ex);
+                throw new UnAuthorizeException($"Refresh token expired at {ex.Expires}");
             }
         }
     }

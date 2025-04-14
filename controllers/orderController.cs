@@ -20,33 +20,25 @@ namespace back.controllers
         private readonly IOrderService _orderService;
         private readonly IVNPayService _vNPayService
         ;
-        public orderController(IOrderService orderService,IVNPayService vNPayService)
+        public orderController(IOrderService orderService, IVNPayService vNPayService)
         {
             _orderService = orderService;
             _vNPayService = vNPayService;
         }
-       
+
         [HttpPost("checkout")]
         public async Task<ActionResult> Checkout([FromBody] CheckoutDTO data)
         {
-            try
-            {
-                var (checkout, items) = await _orderService.Checkout(data);
-                return Ok(new { checkout, items });
-            }
-            catch (System.Exception ex)
-            {
-
-                return BadRequest(new { message = ex.Message });
-            }
+            var (checkout, items) = await _orderService.Checkout(data);
+            return Ok(new { Code = 0, message = "ok", data = new { checkout, items } });
         }
         [HttpPost("add")]
         // [Authorize]
         public async Task<ActionResult> AddOrder([FromBody] AddOrderDTO data)
         {
             var res = await _orderService.AddOrder(data);
-            if (res.IsCreated) return Ok(new {data = res } );
-            return Ok(new { message = res.Message });  
+            if (res.IsCreated) return Ok(new {Code = 0, message = res.Message, data = res });
+            return Ok(new {Code = 0, message = res.Message });
         }
         [HttpGet("user")]
         public async Task<ActionResult> GetOrder()
@@ -75,20 +67,21 @@ namespace back.controllers
             return Ok(new { data = order });
         }
         [HttpPost("create-payment")]
-       
-        public  async Task<ActionResult> Payment([FromBody] VNPayRequest request)
+
+        public async Task<ActionResult> Payment([FromBody] VNPayRequest request)
         {
             var url = _vNPayService.CreatePayMent(request);
             await _orderService.SaveLinkPayment(request.OrderId!, url);
             return Ok(new { url });
         }
         [HttpGet("payment_callback")]
-       
-        public  async Task<ActionResult>  PaymentCallBack()
+
+        public async Task<ActionResult> PaymentCallBack()
         {
             var url = _vNPayService.VNPayExcute(Request.Query);
             await _orderService.UpdateStatusPayment(url.OrderId!);
             return Redirect("http://localhost:3000/order/detail/" + url.OrderId);
         }
+        
     }
 }

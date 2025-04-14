@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using back.DTOs.Inventory;
-using back.models;
 using MongoDB.Driver;
 
 namespace back.services

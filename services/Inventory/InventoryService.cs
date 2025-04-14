@@ -5,24 +5,25 @@ using System.Threading.Tasks;
 using AutoMapper;
 using back.DTOs.Inventory;
 using back.models;
+using BackEnd.Repository;
 using MongoDB.Driver;
 
 namespace back.services
 {
     public class InventoryService:IInventoryService
     {
-        private readonly IMongoCollection<Inventory> _inventory;
+        private readonly IInventoryRepository _inventoryRepo;
+       
         private readonly IMapper _mapper;
-        public InventoryService(IMongoClient client, MongoDbSetting setting, IMapper mapper)
+        public InventoryService(IInventoryRepository inventoryRepo,IMapper mapper)
         {
-            var database = client.GetDatabase(setting.DatabaseName);
-            _inventory = database.GetCollection<Inventory>("Inventories");
+            _inventoryRepo = inventoryRepo;
             _mapper = mapper;
         }
-
+        
         public async Task AddStockToInventory(AddStockToInventoryDTO data)
         {
-            await _inventory.InsertOneAsync(_mapper.Map<Inventory>(data));  
+            await _inventoryRepo.Insert(_mapper.Map<Inventory>(data));
         }
 
         public async Task<UpdateResult> ReservationInventory(string productId, string cartId, int quantity)
@@ -35,10 +36,7 @@ namespace back.services
                 Quantity = quantity,
                 CreateOn =  DateTime.Now
             });
-            return await _inventory.UpdateOneAsync(filter, update, new UpdateOptions
-            {
-                IsUpsert = true,
-            }); 
+            return await _inventoryRepo.Update(filter,update,true);
         }
     }
 }

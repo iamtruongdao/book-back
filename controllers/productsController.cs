@@ -50,7 +50,7 @@ namespace back.controllers
         public async Task<ActionResult<IEnumerable<Product>>> GetAllProduct()
         {
             var products = await _productService.GetAllProduct();
-            return Ok(new {EC = 0, products = products});
+            return Ok(new {Code = 0, products = products});
         }
         [HttpGet("slide")]
        
@@ -58,28 +58,33 @@ namespace back.controllers
         {
             var products = await _productService.GetSliderProduct(limit);
             if (products.Count == 0) return BadRequest("not found product");
-            return Ok(new { EC = 0, products = products });
+            return Ok(new { Code = 0, products = products });
         }
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteProduct(string id)
         {
             var products = await _productService.DeleteProduct(id);
-            return Ok(new {EC = 0, products = products});
+            return Ok(new {Code = 0, products = products});
         }
         [HttpPut]
         public async Task<ActionResult> UpdateProduct([FromBody] UpdateProductDTO product)
         {
             if(product == null) return BadRequest("product is invalid");
             var products = await _productService.UpdateProduct(product);
-            return Ok(new {EC = 0, products = products});
+            return Ok(new {Code = 0, products = products});
         }
         [HttpGet("{slug}")]
         public async Task<ActionResult<Product>> GetProduct(string slug)
         {
             var product = await _productService.GetProduct(slug);
-            return product is null ? NotFound("product not found") : Ok(new {EC = 0, product = product});
+            return product is null ? NotFound("product not found") : Ok(new {Code = 0,message ="ok", data = product});
         }
-        
+          [HttpGet("get-by-author/{author}")]
+        public async Task<ActionResult<Product>> GetProductByAuthor(string author)
+        {
+            var product = await _productService.GetProductByAuthor(author);
+            return  Ok(new {Code = 0,message ="ok", data = product});
+        }
        
         [HttpGet("paginate")]
         // [Authorize(Roles = nameof(ROLE.User))]
@@ -88,7 +93,7 @@ namespace back.controllers
         {
             
             var products = await _productService.GetAllFilter(sortOrder ?? "", currentFilter ?? "", searchString ?? "",cate ?? "", pageNumber, pageSize ?? 10,minPrice,maxPrice);
-            return Ok(new {EC = 0, products = products});
+            return Ok(new {Code = 0,message = "ok", data = products});
         }
     }
 }

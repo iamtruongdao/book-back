@@ -1,6 +1,1 @@
-{
-  "csharp.supressBuildAssetsNotification": true,
-  "csharp.showInternalMethods": false,
-  "debug.allowBreakpointsEverywhere": true,
-  "csharp.debug.logging.diagnosticsLog.debugRuntimeEventTracing": false
-}
+{}

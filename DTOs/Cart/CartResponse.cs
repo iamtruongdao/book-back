@@ -3,14 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using back.models;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace back.DTOs.Cart
 {
     public class CartResponse
     {
-        public string? _id { get; set; }
+        [BsonElement("_id")]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? Id { get; set; }
         public string? UserId { get; set; }
-        public List<CartProductRes>? CartProduct { get; set; }
+        public List<CartProductRes>? CartProducts { get; set; }
+        public int CartCountProduct { get; set; }
     }
     public class CartProductRes : CartProductItem
     {
@@ -21,6 +26,7 @@ namespace back.DTOs.Cart
         public string? Slug { get; set; }
         public decimal ProductPrice { get; set; }
         public decimal Discount { get; set; }
+        public decimal DiscountPrice => ProductPrice - Discount;
         public string? Avatar { get; set; }
     }
 }

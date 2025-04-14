@@ -19,6 +19,8 @@ using back.services.Email;
 using BackEnd.services.VNPay;
 using BackEnd.Middleware;
 using Serilog;
+using BackEnd.Repository;
+using BackEnd.services.Ship;
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders(); // Xóa tất cả các logger mặc định
 builder.Logging.AddConsole(); 
@@ -31,6 +33,14 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
+//http client
+builder.Services.AddHttpClient("ghn", c =>
+{
+    c.DefaultRequestHeaders.Add("Token", builder.Configuration["GHN:Token"]);
+    c.DefaultRequestHeaders.Add("ShopId", builder.Configuration["GHN:ShopId"]);
+    
+    c.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 // log
 builder.Host.UseSerilog((context, configuration) =>
 {
@@ -75,7 +85,7 @@ builder.Services.AddSwaggerGen(c =>
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(MyAllowSpecificOrigins,policy => policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+    options.AddPolicy(MyAllowSpecificOrigins,policy => policy.WithOrigins("http://localhost:3000","http://localhost:5173").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 });
 
 //Mapper
@@ -124,37 +134,37 @@ builder.Services.AddAuthentication(options =>
              ClockSkew = TimeSpan.Zero,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["jwtOptions:SecretKey"]!)),
     };
-    // opts.Events = new JwtBearerEvents
-    // {
+    opts.Events = new JwtBearerEvents
+    {
     
-    //     OnChallenge = async context =>
-    //     {
-    //         // context.HandleResponse();
-    //         // if (context.AuthenticateFailure is SecurityTokenExpiredException expiredException)
-    //         // {
-    //         //     context.Response.StatusCode = StatusCodes.Status410Gone;
-    //         //     context.Response.ContentType = "application/json";
-    //         //     var result = JsonSerializer.Serialize(new
-    //         //     {
-    //         //         Error = "TokenExpired",
-    //         //         Message = "Your token has expired. Please refresh your token.",
-    //         //         ExpiredAt = expiredException.Expires
-    //         //     });
-    //         //     await context.Response.WriteAsync(result);
-    //         // }
-    //         // else
-    //         // {
-    //             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-    //             context.Response.ContentType = "application/json";
-    //             var result = JsonSerializer.Serialize(new
-    //             {
-    //                 Error = "Unauthorized",
-    //                 Message = "Authentication failed."
-    //             });
-    //             await context.Response.WriteAsync(result);
-    //         }
-    //         // }
-    // };
+        OnChallenge = async context =>
+        {
+            context.HandleResponse();
+            if (context.AuthenticateFailure is SecurityTokenExpiredException expiredException)
+            {
+                context.Response.StatusCode = StatusCodes.Status410Gone;
+                context.Response.ContentType = "application/json";
+                var result = JsonSerializer.Serialize(new
+                {
+                    Error = "TokenExpired",
+                    Message = "Your token has expired. Please refresh your token.",
+                    ExpiredAt = expiredException.Expires
+                });
+                await context.Response.WriteAsync(result);
+            }
+            else
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                var result = JsonSerializer.Serialize(new
+                {
+                    Error = "Unauthorized",
+                    Message = "Authentication failed."
+                });
+                await context.Response.WriteAsync(result);
+            }
+            }
+    };
 });
 // DI for services
 builder.Services.AddHostedService<ConfigureMongoDbIndexesService>();
@@ -169,7 +179,14 @@ builder.Services.AddScoped<ICartServices, CartService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<ICategoriesService, CategoryService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IShipService, ShipService>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
+builder.Services.AddScoped<IProductRepository, ProductRepo>();
+builder.Services.AddScoped<ICartRepository, CartRepo>();
+builder.Services.AddScoped<IOrderRepository, OrderRepo>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepo>();
+builder.Services.AddScoped<IAuthorRepository, AuthorRepo>();
+builder.Services.AddScoped<IInventoryRepository, InventoryRepo>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -180,11 +197,6 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ErrorMiddleware>();
 
 app.UseHttpsRedirection();
-// app.Use(async (context, next) =>
-// {
-//     Console.WriteLine(context.Request.Path);
-//     await next();
-// });
 
 app.UseSwagger();
 

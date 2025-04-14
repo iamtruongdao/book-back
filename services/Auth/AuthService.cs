@@ -13,6 +13,7 @@ using back.DTOs.User;
 using back.models;
 using back.services.Email;
 using BackEnd.DTOs.Auth;
+using BackEnd.Exceptions;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -85,28 +86,22 @@ namespace back.services
             var userExist = await _userManager.FindByEmailAsync(request.Email!);
             if (userExist is null)
             {
-                return new LoginResponse
-                {
-                    Success = false,
-                    Message = "Invalid Email/Password"
-                };
+                throw new NotFoundException("Invalid Email/Password");
+                
             }
             if (await _userManager.IsLockedOutAsync(userExist))
             {
-                return new LoginResponse
-                {
-                    Success = false,
-                    Message = "Tài Khoản của bạn đã bị khóa"
-                };
+                throw new NotFoundException("Tài Khoản của bạn đã bị khóa");
             }
             var checkPassword = await _userManager.CheckPasswordAsync(userExist, request.Password!);
-            if (!checkPassword) return new LoginResponse
+            if (!checkPassword) 
             {
-                Success = false,
-                Message = "Invalid Email/Password"
+             throw new NotFoundException("Invalid Email/Password");
+
             };
             var claims = new List<Claim>{
-                new Claim(JwtRegisteredClaimNames.Sub, userExist.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()),
+                new Claim("Id", userExist.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, userExist.Email!),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.Name,userExist.FullName!)
@@ -126,10 +121,11 @@ namespace back.services
                 Roles = roles.ToList()
             };
         }
+        
 
-
-        public AuthenticateResponse RefreshToken(string token)
+        public AuthenticateResponse RefreshToken(string? token)
         {
+            if (token is null) throw new UnAuthorizeException("please login");
             var claimsPrincipal = _tokenService.GetPrincipalFromExpiredToken(token);
             var newAccessToken = _tokenService.GenerateAccessToken(claimsPrincipal.Claims);
             var newRefreshToken = _tokenService.GenerateRefreshToken(claimsPrincipal.Claims);
@@ -140,9 +136,6 @@ namespace back.services
             };
 
         }
-
-
-
         public async Task<RegisterResponse> Register(RegisterRequest request)
         {
             var userExist = await _userManager.FindByEmailAsync(request.Email!);

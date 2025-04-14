@@ -9,6 +9,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
+      "justMyCode": true,
       // If you have changed target frameworks, make sure to update the program path.
       "program": "${workspaceFolder}/bin/Debug/net9.0/back.dll",
       "args": [],

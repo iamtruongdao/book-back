@@ -7,6 +7,7 @@ using back.DTOs.Categories;
 using back.models;
 using back.services;
 using back.Viewmodel;
+using BackEnd.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,34 +36,34 @@ namespace back.controllers
         public async Task<ActionResult<IEnumerable<Category>>> GetAllCat()
         {
             var cats = await _categoriesService.GetAllCat();
-            return Ok(new { EC = 0, categories = cats });
+            return Ok(new { Code = 0, categories = cats });
         }
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteCat(string id)
         {
             var cats = await _categoriesService.DeleteCat(id);
-            return Ok(new {EC = 0, categories = cats});
+            return Ok(new {Code = 0, categories = cats});
         }
         [HttpPut]
         public async Task<ActionResult> UpdateCat([FromBody] UpdateCatDTO cat)
         {
             if(cat == null) return BadRequest("cat is invalid");
             var cats = await _categoriesService.UpdateCat(cat);
-            return Ok(new {EC = 0, categories = cats});
+            return Ok(new {Code = 0, categories = cats});
         }
         [HttpGet("{slug}")]
         public async Task<ActionResult<Category>> GetCat( string slug)
         {
             var cat = await _categoriesService.GetCat(slug);
-            return cat is null ? NotFound("cat not found") : Ok(new {EC = 0,msg = "ok", cat = cat});
+            return cat is null ? NotFound("cat not found") : Ok(new {Code = 0,msg = "ok", cat = cat});
         }
         
        
         [HttpGet("paginate")]
-        public async Task<ActionResult<PaginatedList<Category>>> GetAllFilter([FromQuery] string? sortOrder, string? currentFilter, string? searchString, int pageNumber, int? pageSize)
+        public async Task<ActionResult<PaginatedList<Category>>> GetAllFilter([FromQuery] PaginateRequest request)
         {
-            var cats = await _categoriesService.GetAllFilter(sortOrder ?? "", currentFilter ?? "", searchString ?? "", pageNumber, pageSize ?? 10);
-            return Ok(new {EC = 0, categories= cats});
+            var cats = await _categoriesService.GetAllFilter(request.SortOrder ?? "", request.CurrentFilter ?? "", request.SearchString ?? "", request.PageNumber, request.PageSize );
+            return Ok(new {Code = 0, categories= cats});
         }
     }
 }

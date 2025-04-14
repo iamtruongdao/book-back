@@ -6,14 +6,16 @@ using back.DTOs.Auth;
 
 using back.DTOs.User;
 using BackEnd.DTOs.Auth;
+using Microsoft.AspNetCore.Mvc;
 
 namespace back.services
 {
     public interface IAuthService
     {
         public Task<LoginResponse> Login(LoginRequest request);
+        // public Task<ActionResult> LogOut();
         public Task<RegisterResponse> Register(RegisterRequest request);
-        public AuthenticateResponse RefreshToken(string token);
+        public AuthenticateResponse RefreshToken(string? token);
         public Task<UserResponse> GetUser(string user_id);
         public Task<bool> ChangePassword(ChangePasswordRequest data);
         public Task<bool> ResetPassword(ResetPasswordRequest data);
