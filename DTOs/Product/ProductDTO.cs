@@ -39,7 +39,7 @@ namespace back.DTOs.Product
         public string? Avatar { get; set; }
         public string? AuthorName { get; set; }
         public string? Author { get; set; }
-        public List<Category>? Cat { get; set; }
+        public List<Category>? Category { get; set; }
         public bool IsPublic { get; set; }
     }
     public class CreateProductDTO

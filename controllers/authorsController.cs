@@ -26,27 +26,27 @@ namespace back.controllers
         public async Task<ActionResult> AddAuthor([FromBody] CreateAuthorDTO author)
         {
             var createdAuthor = await _authorService.AddAuthor(author);
-            return createdAuthor is null ? BadRequest("Author is invalid") : CreatedAtAction("GetAuthor", new {slug = createdAuthor.Slug}, createdAuthor);
+            return createdAuthor is null ? BadRequest("Author is invalid") : CreatedAtAction("GetAuthor", new {slug = createdAuthor.Slug}, new {Code = 0,message = "ok",data = createdAuthor});
         }
          [HttpPost("all")]
         public async Task<ActionResult> AddAuthorMany([FromBody] List<CreateAuthorDTO> author)
         {
             var createdAuthor = await _authorService.AddAuthorMany(author);
-            return Ok(new {Code = 0, authors = createdAuthor});
+            return Ok(new {Code = 0, data = createdAuthor});
         }
         [HttpGet]
         [ProducesResponseType (200)]
         public async Task<ActionResult<IEnumerable<Author>>> GetAllAuthor()
         {
             var authors = await _authorService.GetAllAuthor();
-            return Ok(new {Code = 0,message = "ok", authors = authors});
+            return Ok(new {Code = 0,message = "ok", data = authors});
         }
         [HttpGet("string")]
         [ProducesResponseType (200)]
         public async Task<ActionResult> GetStrings()
         {
             var authors = await _authorService.GetStrings();
-            return Ok(new {Code = 0,message = "ok", authors = authors});
+            return Ok(new {Code = 0,message = "ok", data = authors});
         }
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteAuthor(string id)

@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Slugify;
 
-namespace back.DTOs.Categories
+namespace BackEnd.DTOs.Tag
 {
-    public class UpdateCatDTO
+    public class UpdateTagDto
     {
-        public string? Id { get; set; }
-        public string? Name { get; set; }
+        public string? Name { get; set; } 
         public string? Slug => new SlugHelper().GenerateSlug(Name);
+
     }
 }

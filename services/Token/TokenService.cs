@@ -22,10 +22,12 @@ namespace back.services
         {
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey!));
             var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+            var filteredClaims = claims
+            .Where(c => c.Type != JwtRegisteredClaimNames.Aud && c.Type != "aud");
             var tokeOptions = new JwtSecurityToken(
                 issuer: _jwtOptions.Issuer,
                 audience: _jwtOptions.Audience,
-                claims: claims,
+                claims: filteredClaims,
                 expires: DateTime.UtcNow.AddMinutes(60),
                 signingCredentials: signinCredentials
             );
@@ -37,10 +39,12 @@ namespace back.services
         {
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey!));
             var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+            var filteredClaims = claims
+            .Where(c => c.Type != JwtRegisteredClaimNames.Aud && c.Type != "aud");
             var tokeOptions = new JwtSecurityToken(
                 issuer: _jwtOptions.Issuer,
                 audience: _jwtOptions.Audience,
-                claims: claims,
+                claims: filteredClaims,
                 expires: DateTime.UtcNow.AddDays(7),
                 signingCredentials: signinCredentials
             );

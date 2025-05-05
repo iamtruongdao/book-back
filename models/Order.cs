@@ -22,9 +22,12 @@ namespace back.models
         [BsonRepresentation(BsonType.String)]
         public PAYMENT OrderPayment { get; set; }
         public string? OrderCode { get; set; }
-        public bool IsPayment { get; set; }
+        public string? TrackingNumber { get; set; }
+        [BsonRepresentation(BsonType.String)]
+
+        public PaymentStatus? PaymentStatus { get; set; }
         public string? LinkPayment { get; set; }
- 
+
         [BsonRepresentation(BsonType.DateTime)]
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -64,14 +67,21 @@ namespace back.models
         COD,
         VNPAY
     }
-    public enum OrderState
+    public enum PaymentStatus
+    {
+        Paid,
+        WaitingPaid,
+        Refund,
+        Failed
+    }
+    public enum OrderState      
     {
         Pending,
-        Confirmed,
+        WaitingPickup,
         Shipping,
         Cancel,
         Delivered,
-        Paid,
+       
     
     }
 }

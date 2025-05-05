@@ -18,7 +18,7 @@ namespace BackEnd.Repository
         Task<Product> Create(Product category);
         Task<List<Product>> GetAllProducts();
         Task<List<Product>> GetLimit(int limit);
-        Task<ReplaceOneResult> UpdateProduct(Product category);
+        Task<ReplaceOneResult> UpdateProduct(Product product);
         Task<DeleteResult> DeleteProduct(string id);
         Task<List<BsonDocument>> GetOneProduct(FilterDefinition<Product> filter);
         Task<(List<BsonDocument>,long)> GetAllFilter(FilterDefinition<Product> filter,SortDefinition<Product> sort,  int pageNumber, int pageSize);
@@ -56,13 +56,14 @@ namespace BackEnd.Repository
         }
         public async Task<(List<BsonDocument>,long)> GetAllFilter(FilterDefinition<Product> filter,SortDefinition<Product> sort,  int pageNumber, int pageSize)
         {   
-            
+             
             long totalPage = await _product.Find(filter).CountDocumentsAsync();
-            return  (await _product.Aggregate().Match(filter).Sort(sort).Lookup("Authors","Author","_id","AuthorInfor").Lookup("Categories","Cat","_id","Cat").Project(BsonDocument.Parse(@"{
+            return  (await _product.Aggregate().Match(filter).Sort(sort).Lookup("Authors","Author","_id","AuthorInfor").Lookup("Categories","Cat","_id","Category").Project(BsonDocument.Parse(@"{
                 _id:1,
                 ProductPrice: 1,
                 ProductName: 1,
                 Discount: 1,
+                Sold:1,
                 ProductQuantity:1,
                 AuthorName: {$arrayElemAt:['$AuthorInfor.AuthorName',0]},
                 DiscountPrice:{ 
@@ -73,13 +74,11 @@ namespace BackEnd.Repository
                 },
                 Avatar:1,
                 Slug:1,
-                Cat: 1,
+                Category: 1,
+                PublicDate:1,
                 Author:{$toString:'$Author'},
                 ProductDescription:1,   
             }")).Skip((pageNumber - 1)*pageSize).Limit(pageSize).ToListAsync(),totalPage);
-           
-           
-            
         }
         public async Task<List<Product>> GetAllProducts()
         {
@@ -93,7 +92,7 @@ namespace BackEnd.Repository
 
         public async Task<List<BsonDocument>> GetOneProduct(FilterDefinition<Product> filter)
         {
-            return await _product.Aggregate().Match(filter).Lookup("Authors", "Author", "_id", "AuthorInfo").Lookup("Categories", "Cat", "_id", "Cat").Project(BsonDocument.Parse(@"{
+            return await _product.Aggregate().Match(filter).Lookup("Authors", "Author", "_id", "AuthorInfo").Lookup("Categories", "Cat", "_id", "Category").Project(BsonDocument.Parse(@"{
                 _id:1,
                 ProductPrice:1,
                 Discount:1,
@@ -101,6 +100,8 @@ namespace BackEnd.Repository
                 ProductDescription:1,
                 ProductQuantity:1,
                 Slug:1,
+                Sold:1,
+                PublicDate:1,
                 DiscountPrice:{ 
                     $subtract: [ 
                         '$ProductPrice', 
@@ -109,11 +110,10 @@ namespace BackEnd.Repository
                 },
                 Translator:1,
                 Avatar:1,
-                PublicDate:1,
                 PageNumber:1,
                 Author:{$toString:'$Author'},
                 AuthorName:{$arrayElemAt:['$AuthorInfo.AuthorName',0]},
-                Cat:1
+                Category:1
             }")).ToListAsync();
         }
 

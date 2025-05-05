@@ -21,9 +21,9 @@ using BackEnd.Middleware;
 using Serilog;
 using BackEnd.Repository;
 using BackEnd.services.Ship;
-var builder = WebApplication.CreateBuilder(args);
-builder.Logging.ClearProviders(); // Xóa tất cả các logger mặc định
-builder.Logging.AddConsole(); 
+using BackEnd.services.Posts;
+using BackEnd.services.Tag;
+var builder = WebApplication.CreateBuilder(args); 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -38,7 +38,6 @@ builder.Services.AddHttpClient("ghn", c =>
 {
     c.DefaultRequestHeaders.Add("Token", builder.Configuration["GHN:Token"]);
     c.DefaultRequestHeaders.Add("ShopId", builder.Configuration["GHN:ShopId"]);
-    
     c.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 // log
@@ -181,12 +180,18 @@ builder.Services.AddScoped<ICategoriesService, CategoryService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IShipService, ShipService>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
+builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<ITagService, TagService>();
+
+//repo
 builder.Services.AddScoped<IProductRepository, ProductRepo>();
 builder.Services.AddScoped<ICartRepository, CartRepo>();
 builder.Services.AddScoped<IOrderRepository, OrderRepo>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepo>();
 builder.Services.AddScoped<IAuthorRepository, AuthorRepo>();
 builder.Services.AddScoped<IInventoryRepository, InventoryRepo>();
+builder.Services.AddScoped<IPostRepository, PostRepo>();
+builder.Services.AddScoped<ITagRepository, TagRepo>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

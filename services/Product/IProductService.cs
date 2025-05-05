@@ -21,6 +21,8 @@ namespace back.services
     
          Task<List<Product>> GetAllProduct();
          Task<List<Product>> GetSliderProduct(int limit);
+         Task<PaginatedList<ProductDTO>> GetProductWaitPublish(int pageSize = 10,int pageNumber = 1);
+         Task<PaginatedList<ProductDTO>> GetTopProduct(int year, int pageSize = 5,int pageNumber = 1);
          Task<PaginatedList<ProductDTO>> GetAllFilter(string sortOrder,string currentFilter,string searchString,string category,int pageNumber,int pageSize,decimal minPrice,decimal maxPrice );
     }
 }

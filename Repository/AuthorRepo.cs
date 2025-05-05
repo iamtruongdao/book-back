@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using back.models;
 using back.Viewmodel;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Slugify;
 
@@ -65,19 +66,32 @@ namespace BackEnd.Repository
 
         public async Task<PaginatedList<Author>> GetAllFilter(string sortOrder, string currentFilter, string searchString, int? pageNumber, int pageSize)
         {
-            if(!String.IsNullOrEmpty(searchString)) {
+            var filters = new List<FilterDefinition<Author>>();
+            var sort = Builders<Author>.Sort.Ascending("Id");
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
                 pageNumber = 1;
-            } 
-            var filter = Builders<Author>.Filter.Empty;
-            SortDefinition<Author> sort;
-            if(!String.IsNullOrEmpty(currentFilter)) {
-                sort = sortOrder.ToLower() == "desc" ? Builders<Author>.Sort.Descending(currentFilter) : Builders<Author>.Sort.Ascending(currentFilter);
-            } else {
-                sort = Builders<Author>.Sort.Ascending("Id");
+                filters.Add(
+                    Builders<Author>.Filter.Regex("AuthorName", new BsonRegularExpression(searchString, "i"))
+                );
             }
-            if(!String.IsNullOrEmpty(searchString)) {
-                filter = Builders<Author>.Filter.Regex("AuthorName", new MongoDB.Bson.BsonRegularExpression(searchString));
-            }            
+
+            // Add thêm các filter khác nếu cần ở đây...
+
+            // Combine tất cả filter lại
+            var filter = filters.Any()
+                ? Builders<Author>.Filter.And(filters)
+                : Builders<Author>.Filter.Empty;
+
+            // Xử lý sort
+            if (!string.IsNullOrEmpty(currentFilter))
+            {
+                sort = sortOrder.ToLower() == "desc"
+                    ? Builders<Author>.Sort.Descending(currentFilter)
+                    : Builders<Author>.Sort.Ascending(currentFilter);
+            }
+       
             long totalPage = await _author.Find(filter).CountDocumentsAsync();
             var author = await _author.Find(filter).Sort(sort).Skip((pageNumber-1)*pageSize).Limit(pageSize).ToListAsync();
             return new PaginatedList<Author>(author,(int)totalPage,pageNumber ?? 1,pageSize );

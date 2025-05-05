@@ -4,9 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Slugify;
 
-namespace back.DTOs.Categories
+namespace BackEnd.DTOs.Tag
 {
-    public class UpdateCatDTO
+    public class CreateTagDto
     {
         public string? Id { get; set; }
         public string? Name { get; set; }

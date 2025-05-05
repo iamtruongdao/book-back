@@ -87,41 +87,57 @@ namespace back.services
             var filter = Builders<Product>.Filter.Eq(x => x.Slug, slug);
             var products = await _productRepo.GetOneProduct(filter);
             if (products is null) throw new NotFoundException("product is notfound");
-            var newProducts = products.Select(doc => BsonSerializer.Deserialize<ProductDTO>(doc)).First();
+            var newProducts = products.Select(doc => BsonSerializer.Deserialize<ProductDTO>(doc)).First();  
             return newProducts;
         }
         public async Task<PaginatedList<ProductDTO>> GetAllFilter(string sortOrder, string currentFilter, string searchString, string category, int pageNumber, int pageSize, decimal minPrice, decimal maxPrice)
         {
-            var buildFilter = Builders<Product>.Filter; 
-            var filter = buildFilter.Empty;
+           
+           var buildFilter = Builders<Product>.Filter;
+            var filters = new List<FilterDefinition<Product>>(); // ✅ danh sách filter
             SortDefinition<Product> sort;
             var orderBy = Builders<Product>.Sort;
 
-            if (!String.IsNullOrEmpty(currentFilter))
+            // Sort
+            if (!string.IsNullOrEmpty(currentFilter))
             {
-                sort = sortOrder?.ToLower() == "desc" ? orderBy.Descending(currentFilter) : orderBy.Ascending(currentFilter);
+                sort = sortOrder?.ToLower() == "desc"
+                    ? orderBy.Descending(currentFilter)
+                    : orderBy.Ascending(currentFilter);
             }
             else
             {
-                sort = Builders<Product>.Sort.Ascending("Id");
+                sort = orderBy.Ascending("Id");
             }
-            if (!String.IsNullOrEmpty(searchString)) {
-                filter = buildFilter.Text(searchString);
+            Console.WriteLine(searchString);
+            // Search text
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                filters.Add(buildFilter.Regex(p => p.ProductName, new BsonRegularExpression(searchString, "i")));
             }
+
+            // Price range
             if (minPrice != 0 && maxPrice != 0)
             {
-                filter = Builders<Product>.Filter.And(buildFilter.Gte(x => x.ProductPrice, minPrice), buildFilter.Lte(x => x.ProductPrice, maxPrice));
+                filters.Add(buildFilter.Gte(x => x.ProductPrice, minPrice));
+                filters.Add(buildFilter.Lte(x => x.ProductPrice, maxPrice));
+            }
 
-            }
-            if (!String.IsNullOrEmpty(category))
+            // Category
+            if (!string.IsNullOrEmpty(category))
             {
-                var cate = await _categoryRepo.FindBySlug(category);
-                filter = buildFilter.AnyEq(x => x.Cat, cate.Id);
+                filters.Add(buildFilter.AnyEq(x => x.Cat, category));
             }
+            
+            // Combine all filters
+            var filter = filters.Any() ? buildFilter.And(filters) : buildFilter.Empty;
+          
             var (products, totalPage) = await _productRepo.GetAllFilter(filter, sort, pageNumber, pageSize);
 
             var convert = products.Select(doc => BsonSerializer.Deserialize<ProductDTO>(doc)).ToList();
+
             return new PaginatedList<ProductDTO>(convert, (int)totalPage, pageNumber, pageSize);
+
         }
 
         public async Task<List<CreateProductDTO>?> AddProductMany(List<CreateProductDTO> product)
@@ -131,8 +147,8 @@ namespace back.services
             {
                 await _inventoryService.AddStockToInventory(new AddStockToInventoryDTO
                 {
-                    ProductId = item.Id.ToString(),
-                    Stock = item.ProductQuantity
+                    ProductId = item.Id!.ToString(),
+                    Stock = item.ProductQuantity    
                 });
             }
             return product;
@@ -147,6 +163,26 @@ namespace back.services
             var convert = products.Select(doc => BsonSerializer.Deserialize<ProductDTO>(doc)).ToList().AsQueryable().OrderByDescending(x => x.Sold).First();
             return convert;
         }
-        
+
+        public async Task<PaginatedList<ProductDTO>> GetProductWaitPublish(int pageSize = 10, int pageNumber = 1)
+        {
+            var filter = Builders<Product>.Filter.Eq(x => x.IsPublic, false);
+            var (products,totalPage) = await  _productRepo.GetAllFilter(filter, Builders<Product>.Sort.Descending("PublicDate"), pageNumber, pageSize);
+            var convert = products.Select(doc => BsonSerializer.Deserialize<ProductDTO>(doc)).ToList();
+            return new PaginatedList<ProductDTO>(convert, (int)totalPage, pageNumber, pageSize);
+        }
+
+        public async Task<PaginatedList<ProductDTO>> GetTopProduct(int year,int pageSize = 5, int pageNumber = 1)
+        {
+            
+            var startDate = new DateTime(year, 1, 1);
+            var endDate = new DateTime(year + 1, 1, 1);
+
+            var builder = Builders<Product>.Filter;
+            var filter = builder.Gte(x => x.PublicDate, startDate) & builder.Lt(x => x.PublicDate, endDate);
+            var (products,totalPage) = await  _productRepo.GetAllFilter(filter, Builders<Product>.Sort.Descending("Sold"), pageNumber, pageSize);
+            var convert = products.Select(doc => BsonSerializer.Deserialize<ProductDTO>(doc)).ToList();
+            return new PaginatedList<ProductDTO>(convert, (int)totalPage, pageNumber, pageSize);
+        }
     }
 }

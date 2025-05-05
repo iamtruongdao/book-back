@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using back.DTOs.Order;
 using back.models;
+using back.Viewmodel;
 using BackEnd.DTOs.Order;
 namespace back.services
 {
@@ -14,10 +15,14 @@ namespace back.services
         Task<AddOrderResponse> AddOrder(AddOrderDTO data);
         Task<Order> UpdateStatus(UpdateStatusDTO id);
         Task<List<Order>> GetOrder();
+        Task<List<Order>> GetOrderByUserId(string? id, OrderState? state);
         Task<Order> GetOrderById(string id);
         Task<Order> UpdateStatusPayment(string id);
         Task SaveLinkPayment(string id, string link);
+        Task<PaginatedList<Order>> Filter(int pageSize, int pageNumber, OrderState? state);
         List<DashBoardResponse> DashBoard();
+        Task<Order> CancelOrder(UpdateStatusDTO id);
+        Task<List<OrderStatisticResponse>> OrderStatistic(int year);
         
     }
 }
