@@ -50,19 +50,19 @@ namespace BackEnd.Controllers
         [HttpPost("create-order")]
         public async Task<ActionResult> CreateOrder([FromBody] CreateOrderDto data)
         {
-             var order = await _shipService.createOrder(
-                data.IsPaymentOnline ? 0 : data.Total!.TotalApplyDiscount,                          // amount
-                data.Address!.FullName!.Trim(),                  // name
-                data.Address!.PhoneNumber!,                  // name
-                    // phone
-                data.Address.Address!.Trim() ,                 // address
-                data.Address.Street!.Trim(),              // wardName
-                data.Address.District!.Trim(),              // district
-                data.Address.City!.Trim(),    // provinceName
-                data.OrderCode!  ,
-                data.Time     // orderCode
-            );
-            
+            var order = await _shipService.createOrder(
+               data.IsPaymentOnline ? 0 : data.Total!.TotalApplyDiscount,                          // amount
+               data.Address!.FullName!.Trim(),                  // name
+               data.Address!.PhoneNumber!,                  // name
+                                                            // phone
+               data.Address.Address!.Trim(),                 // address
+               data.Address.Street!.Trim(),              // wardName
+               data.Address.District!.Trim(),              // district
+               data.Address.City!.Trim(),    // provinceName
+               data.OrderCode!,
+               data.Time     // orderCode
+           );
+
             return Ok(order);
         }
         [HttpGet("shop-info")]
@@ -70,6 +70,12 @@ namespace BackEnd.Controllers
         {
             var order = await _shipService.GetShopInfo(
             );
+            return Ok(order);
+        }
+        [HttpPost("leadtime")]
+        public async Task<ActionResult> Leadtime([FromBody] LeadtimeRequest data)
+        {
+            var order = await _shipService.Leadtime(data);
             return Ok(order);
         }
     }

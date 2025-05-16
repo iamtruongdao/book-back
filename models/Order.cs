@@ -27,7 +27,7 @@ namespace back.models
 
         public PaymentStatus? PaymentStatus { get; set; }
         public string? LinkPayment { get; set; }
-
+        public DateTime? DeleveredAt { get; set; }    
         [BsonRepresentation(BsonType.DateTime)]
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

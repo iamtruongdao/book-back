@@ -17,6 +17,7 @@ namespace BackEnd.Repository
         Task<Order> GetOrderById(string id);
         Task<List<Order>> FindByState(string user_id, OrderState state);
         Task<List<Order>> FindByUserId(string user_id);
+        Task<Order> FindByOrderCode(string orderCode);
         Task<Order> UpdateStatus(string id, OrderState status);
         Task Insert(Order order);
         Task<Order> Update<TField>(string id, Expression<Func<Order, TField>> filed, TField value);
@@ -38,6 +39,11 @@ namespace BackEnd.Repository
             var total = await _order.Find(filter).CountDocumentsAsync();
             var result = await _order.Find(filter).Skip((pageNumber-1)*pageSize).Limit(pageSize).ToListAsync();
             return new PaginatedList<Order>(result,(int)total, pageNumber, pageSize);
+        }
+
+        public async Task<Order> FindByOrderCode(string orderCode)
+        {
+            return await _order.Find(x => x.OrderCode == orderCode).FirstOrDefaultAsync();
         }
 
         public async Task<List<Order>> FindByState(string user_id,OrderState state)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using back.DTOs.Order;
 using back.models;
@@ -64,7 +65,7 @@ namespace back.controllers
         [HttpGet("get-order")]
         public async Task<ActionResult> GetOrderByUserId([FromQuery] OrderState? status)
         {
-            var id = HttpContext.User.FindFirst("Id")?.Value;
+            var id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var order = await _orderService.GetOrderByUserId(id,status);
             return Ok(new { Code = 0, data = order, message = "ok" });
         }

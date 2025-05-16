@@ -13,6 +13,7 @@ namespace BackEnd.services.Ship
         Task<object> getDistrict(string provinceId);
         Task<object> getWard(string districtId);
         Task<ShopResponse> GetShopInfo();
+        Task<LeadtimeResponse> Leadtime(LeadtimeRequest data);
         Task<CreateOrderResponse> createOrder(decimal amout, string name, string phone, string address, string wardName, string districtName, string provinceName, string orderCode, long pickUpTime);
         Task<PrintShipmentResponse> PrintShipment(string orderCode);
     }

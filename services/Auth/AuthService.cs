@@ -101,8 +101,8 @@ namespace back.services
 
             };
             var claims = new List<Claim>{
-                new Claim(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()),
-                new Claim("Id", userExist.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, userExist.Id.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, userExist.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, userExist.Email!),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.Name,userExist.FullName!)

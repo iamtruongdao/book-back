@@ -23,6 +23,8 @@ using BackEnd.Repository;
 using BackEnd.services.Ship;
 using BackEnd.services.Posts;
 using BackEnd.services.Tag;
+using BackEnd.hub;
+using BackEnd.services.Notifications;
 var builder = WebApplication.CreateBuilder(args); 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -99,6 +101,11 @@ builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Emai
 builder.Services.AddSingleton<MongoDbSetting>(sp => sp.GetRequiredService<IOptions<MongoDbSetting>>().Value);
 builder.Services.AddSingleton<IMongoClient>(s => new MongoClient(mongoDbSettings?.ConnectionURI));
 builder.Services.AddScoped<ErrorMiddleware>();
+//SignalR
+builder.Services.AddSignalR().AddJsonProtocol().AddHubOptions<NotificationHub>(options =>
+    {
+        options.EnableDetailedErrors = true;  // Bật chế độ lỗi chi tiết khi cần
+    });;
 //Authentication
 IdentityModelEventSource.ShowPII = true;
 builder.Services.AddIdentityMongoDbProvider<User, Role, ObjectId>(
@@ -124,18 +131,18 @@ builder.Services.AddAuthentication(options =>
 {
     opts.TokenValidationParameters = new TokenValidationParameters
     {
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["jwtOptions:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["jwtOptions:Audience"],
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true, 
-             ClockSkew = TimeSpan.Zero,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["jwtOptions:SecretKey"]!)),
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["jwtOptions:Issuer"],
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["jwtOptions:Audience"],
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ClockSkew = TimeSpan.Zero,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["jwtOptions:SecretKey"]!)),
     };
     opts.Events = new JwtBearerEvents
     {
-    
+
         OnChallenge = async context =>
         {
             context.HandleResponse();
@@ -162,9 +169,10 @@ builder.Services.AddAuthentication(options =>
                 });
                 await context.Response.WriteAsync(result);
             }
-            }
+        }
     };
 });
+
 // DI for services
 builder.Services.AddHostedService<ConfigureMongoDbIndexesService>();
 builder.Services.AddSingleton<ICloundinaryService, CloudinaryService>();
@@ -182,6 +190,7 @@ builder.Services.AddScoped<IShipService, ShipService>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
 builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 //repo
 builder.Services.AddScoped<IProductRepository, ProductRepo>();
@@ -192,6 +201,7 @@ builder.Services.AddScoped<IAuthorRepository, AuthorRepo>();
 builder.Services.AddScoped<IInventoryRepository, InventoryRepo>();
 builder.Services.AddScoped<IPostRepository, PostRepo>();
 builder.Services.AddScoped<ITagRepository, TagRepo>();
+builder.Services.AddScoped<INotificationRepo, NotificationRepo>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -212,7 +222,7 @@ app.UseSwaggerUI(c =>
 });
 app.UseCors(MyAllowSpecificOrigins);
 app.MapControllers();
-
+app.MapHub<NotificationHub>("/notification").RequireAuthorization();
 app.UseAuthentication();
 app.UseAuthorization();
 app.Run();

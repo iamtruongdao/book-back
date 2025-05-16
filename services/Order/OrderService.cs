@@ -4,15 +4,19 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using back.DTOs.Cart;
+
 using back.DTOs.Order;
 using back.models;
 using back.Viewmodel;
 using BackEnd.DTOs.Order;
+using BackEnd.DTOs.Ship;
 using BackEnd.Exceptions;
+using BackEnd.hub;
+using BackEnd.models;
 using BackEnd.Repository;
 using BackEnd.services.Ship;
 using Microsoft.AspNetCore.Server.IIS;
+using Microsoft.AspNetCore.SignalR;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
@@ -26,16 +30,21 @@ namespace back.services
         private readonly ICartRepository _cartRepo;
         private readonly IProductRepository _productRepo;
         private readonly IShipService _shipService;
-        
+        private readonly INotificationRepo _notificationRepo;
         private readonly IInventoryService _inventoryService;
-        public OrderService(ICartRepository cartRepo, IInventoryService inventoryService, IOrderRepository orderRepo, IProductRepository productRepo, IShipService shipService)
+        private readonly IHubContext<NotificationHub> _hubContext;
+        public OrderService(ICartRepository cartRepo, IInventoryService inventoryService, IOrderRepository orderRepo, IProductRepository productRepo, IShipService shipService, IHubContext<NotificationHub> hubContext, INotificationRepo notificationRepo)
         {
-            _inventoryService = inventoryService;
-            _orderRepo = orderRepo;
+            _notificationRepo = notificationRepo;
+            _hubContext = hubContext;
             _cartRepo = cartRepo;
+            _orderRepo = orderRepo;
             _productRepo = productRepo;
             _shipService = shipService;
+            _inventoryService = inventoryService;
         }
+      
+        
      
 
 
@@ -51,6 +60,14 @@ namespace back.services
             var random = new Random();
             string randomPart = new string(Enumerable.Range(0, 6)
             .Select(_ => (char)random.Next('A', 'Z' + 1)).ToArray());
+            var deleveryTime = await _shipService.Leadtime(new LeadtimeRequest {
+               FromWardCode = "1B2808",
+                ToDistrictId = int.Parse(data.Address!.District!),
+                FromDistrictId = 3255,
+                ToWardCode = data.Address.Street,
+                ServiceId = 53320
+            });
+            DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(deleveryTime.Data.Leadtime * 1000);
             var order = new Order
             {
                 OrderAddress = data.Address,
@@ -59,7 +76,8 @@ namespace back.services
                 OrderItem = orderProduct,
                 OrderPayment = data.OrderPayment == PAYMENT.COD.ToString() ? PAYMENT.COD : PAYMENT.VNPAY,
                 PaymentStatus = data.OrderPayment != PAYMENT.COD.ToString() ? PaymentStatus.WaitingPaid : null,
-                OrderCode = $"ORD{DateTime.UtcNow:yyyyMMdd}-{randomPart}"
+                OrderCode = $"ORD{DateTime.UtcNow:yyyyMMdd}-{randomPart}",
+                DeleveredAt = dateTimeOffset.UtcDateTime,
 
             };
             await _orderRepo.Insert(order);
@@ -193,23 +211,22 @@ namespace back.services
         public async Task<Order> UpdateStatus(UpdateStatusDTO data)
         {
             var order = await _orderRepo.GetOrderById(data.OrderId!);
-            // if(order == null) throw new NotFoundException("Order not found");
-            // decimal amout = 0;
-            // if(order.OrderPayment == PAYMENT.COD)
-            // {
-            //     amout = order.OrderCheckout!.TotalApplyDiscount + order.OrderCheckout.FeeShip;
-            // }
-            // var res = await _shipService.createOrder(amout, order.OrderAddress!.FullName!, order.OrderAddress.PhoneNumber!, order.OrderAddress!.Address!, order.OrderAddress!.Street!, order.OrderAddress!.District!, order.OrderAddress.City!, order.OrderCode!);
-            // if (res.Code == 200)
-            // {
-                await _orderRepo.UpdateStatus(data.OrderId!, OrderState.WaitingPickup);
+            if(order == null) throw new NotFoundException("Order not found");
+            await _orderRepo.UpdateStatus(order.Id!, OrderState.WaitingPickup);
+            var notify = new Notification
+            {
+                Content = $"Đơn hàng {order.OrderItem![0].Item!.ProductName} của bạn đã được xác nhận",
+                ReceiverId = order.UserId!,
+                Type = "message",
+            };
+            await _notificationRepo.PushNotification(notify);
+            await _hubContext.Clients.User(order.UserId!).SendAsync("Send", notify);
             // }
             return order;
         }
         public async Task<Order> UpdateStatusPayment(string Id)
         {
             return await _orderRepo.Update(Id, x => x.PaymentStatus,PaymentStatus.Paid);
-
         }
     }
 }

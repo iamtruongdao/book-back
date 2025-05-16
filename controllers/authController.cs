@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using back.DTOs.Auth;
 using back.DTOs.User;
@@ -52,8 +53,14 @@ namespace back.controllers
         [HttpPost("logout")]
         public ActionResult Logout()
         {
-            Response.Cookies.Delete("act");
-            Response.Cookies.Delete("rft");
+             var options = new CookieOptions
+            {
+                Expires = DateTimeOffset.UnixEpoch,
+                SameSite = SameSiteMode.None,
+                Secure = true,
+            };
+            Response.Cookies.Delete("act",options);
+            Response.Cookies.Delete("rft",options);
             return Ok(new {Code = 0, message = "logout success" });
         }
         [HttpPost("register")]
@@ -95,7 +102,7 @@ namespace back.controllers
         [Authorize]
         public async Task<ActionResult> GetUser()
         {
-            var user_id = Request.HttpContext.User.FindFirst("Id")?.Value;
+            var user_id = Request.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var user = await _authService.GetUser(user_id!);
             return Ok(new {Code = 0,message = "ok", data = user });
         }
