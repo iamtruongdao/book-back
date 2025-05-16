@@ -1,6 +1,8 @@
 
 using back.DTOs.Cart;
+using back.models;
 using back.services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -8,7 +10,7 @@ namespace back.controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize]
+    [Authorize]
     
     public class cartController : ControllerBase
     {
@@ -39,7 +41,7 @@ namespace back.controllers
             return Ok(new {Code = 0,Message = "ok",Data = cart});
         }
         [HttpGet("user")]
-        // [Authorize(Roles = nameof(ROLE.User))]
+        [Authorize(Roles = nameof(ROLE.User))]
         
         public IActionResult GetCart([FromQuery] string user_id)
         {

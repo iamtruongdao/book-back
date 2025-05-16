@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using back.models;
 using BackEnd.DTOs.Ship;
 using BackEnd.services.Ship;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BackEnd.Controllers
@@ -42,19 +44,22 @@ namespace BackEnd.Controllers
             return Ok(ward);
         }
         [HttpGet("print-shipment")]
+        [Authorize(Roles = nameof(ROLE.Admin))]
         public async Task<ActionResult> PrintShipment([FromQuery] string order_code)
         {
             var ward = await _shipService.PrintShipment(order_code);
             return Ok(ward);
         }
         [HttpPost("create-order")]
+        [Authorize(Roles = nameof(ROLE.Admin))]
+
         public async Task<ActionResult> CreateOrder([FromBody] CreateOrderDto data)
         {
             var order = await _shipService.createOrder(
                data.IsPaymentOnline ? 0 : data.Total!.TotalApplyDiscount,                          // amount
                data.Address!.FullName!.Trim(),                  // name
                data.Address!.PhoneNumber!,                  // name
-                                                            // phone
+                            // phone
                data.Address.Address!.Trim(),                 // address
                data.Address.Street!.Trim(),              // wardName
                data.Address.District!.Trim(),              // district
@@ -62,10 +67,10 @@ namespace BackEnd.Controllers
                data.OrderCode!,
                data.Time     // orderCode
            );
-
             return Ok(order);
         }
         [HttpGet("shop-info")]
+        [Authorize(Roles = nameof(ROLE.Admin))]
         public async Task<ActionResult> GetShopInfo()
         {
             var order = await _shipService.GetShopInfo(

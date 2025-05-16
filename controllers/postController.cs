@@ -2,14 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using back.models;
 using BackEnd.DTOs.Posts;
 using BackEnd.services.Posts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BackEnd.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = nameof(ROLE.Admin))]
+    
     public class postController : ControllerBase
     {
 
@@ -19,12 +23,13 @@ namespace BackEnd.Controllers
             _postService = postService;
         }
         [HttpGet("paginate")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllPosts([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var posts = await _postService.GetAllPosts(pageNumber,pageSize);
+            var posts = await _postService.GetAllPosts(pageNumber, pageSize);
             return Ok(new { Code = 0, Message = "ok", Data = posts });
         }
-       
+
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPostById(string id)
@@ -33,10 +38,10 @@ namespace BackEnd.Controllers
             return Ok(new { Code = 0, Message = "ok", Data = post });
         }
         [HttpGet("get-by-slug/{slug}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetPostBySlug(string slug)
         {
-
-            var post = await _postService.GetPostBySLug(slug);  
+            var post = await _postService.GetPostBySLug(slug);
             return Ok(new { Code = 0, Message = "ok", Data = post });
         }
         [HttpDelete("delete/{id}")]
@@ -59,12 +64,14 @@ namespace BackEnd.Controllers
         }
 
         [HttpPost("create-many")]
+        [AllowAnonymous]
         public async Task<IActionResult> CreatePostMany([FromBody] List<CreatePostDto> post)
         {
             await _postService.CreatePostManyAsync(post);
             return Ok(new { Code = 0, Message = "ok" });
         }
         [HttpGet("get-by-tag/{tag}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetByTag(string tag)
         {
             var posts = await _postService.GetByTag(tag);

@@ -2,11 +2,14 @@ using Microsoft.AspNetCore.Mvc;
 using BackEnd.models;
 using BackEnd.services.Tag;
 using BackEnd.DTOs.Tag;
+using Microsoft.AspNetCore.Authorization;
+using back.models;
 
 namespace back.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = nameof(ROLE.Admin))]
 public class tagController : ControllerBase
 {
     private readonly ITagService _tagService;
@@ -17,14 +20,16 @@ public class tagController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 1)
     {
         var tags = await _tagService.GetAllAsync(pageSize, pageNumber);
-        return Ok(new {Code = 0 ,message = "ok",data = tags});
+        return Ok(new { Code = 0, message = "ok", data = tags });
     }
-   
+
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(string id)
     {
         var tag = await _tagService.GetByIdAsync(id);
@@ -32,11 +37,12 @@ public class tagController : ControllerBase
     }
 
     [HttpGet("slug/{slug}")]
-    public async Task<IActionResult> GetBySlug(string slug,[FromQuery] int pageSize,int pageNumber)
+    [AllowAnonymous]
+    public async Task<IActionResult> GetBySlug(string slug, [FromQuery] int pageSize, int pageNumber)
     {
         Console.WriteLine(pageNumber.ToString(), pageSize);
-        var result = await _tagService.GetBySlugAsync(slug,pageSize,pageNumber);
-        return  Ok(new {Code = 0 ,message = "ok", data = result});
+        var result = await _tagService.GetBySlugAsync(slug, pageSize, pageNumber);
+        return Ok(new { Code = 0, message = "ok", data = result });
     }
 
     [HttpPost("create")]

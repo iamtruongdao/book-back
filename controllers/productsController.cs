@@ -23,6 +23,7 @@ namespace back.controllers
             _productService = productService;
         }
         [HttpPost]
+        [Authorize(Roles = nameof(ROLE.Admin))]
         public async Task<ActionResult> AddProduct([FromBody] CreateProductDTO product)
         {
             var createdProduct = await _productService.AddProduct(product);
@@ -61,12 +62,14 @@ namespace back.controllers
             return Ok(new { Code = 0, products = products });
         }
         [HttpDelete("{id}")]
+        [Authorize(Roles = nameof(ROLE.Admin))]
         public async Task<ActionResult> DeleteProduct(string id)
         {
             var products = await _productService.DeleteProduct(id);
             return Ok(new { Code = 0, message = "ok", data = products });
         }
         [HttpPut]
+        [Authorize(Roles = nameof(ROLE.Admin))]
         public async Task<ActionResult> UpdateProduct([FromBody] UpdateProductDTO product)
         {
             if (product == null) return BadRequest("product is invalid");

@@ -16,7 +16,7 @@ namespace back.controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize]
+    [Authorize]
     public class orderController : ControllerBase
     {
         private readonly IOrderService _orderService;
@@ -35,7 +35,6 @@ namespace back.controllers
             return Ok(new { Code = 0, message = "ok", data = new { checkout, items } });
         }
         [HttpPost("add")]
-        // [Authorize]
         public async Task<ActionResult> AddOrder([FromBody] AddOrderDTO data)
         {
             var res = await _orderService.AddOrder(data);
@@ -50,11 +49,12 @@ namespace back.controllers
             return Ok(new { Code = 0, message = "ok" ,data = res});
         }
         [HttpGet("order-statistic")]        
+        [Authorize(Roles = nameof(ROLE.Admin))]
         public async Task<ActionResult> OrderStatistic([FromQuery] int year)
         {
             var res = await _orderService.OrderStatistic(year);
-           
-            return Ok(new { Code = 0, message = "ok" ,data = res});
+
+            return Ok(new { Code = 0, message = "ok", data = res });
         }
         [HttpGet("user")]
         public async Task<ActionResult> GetOrder()
@@ -82,14 +82,14 @@ namespace back.controllers
             return Ok(new { Code = 0, data = order, message = "ok" });
         }
         [HttpPost("update-status")]
-        // [Authorize(Roles = nameof(ROLE.Admin))]
+        [Authorize(Roles = nameof(ROLE.Admin))]
         public async Task<ActionResult> UpdateStatus([FromBody] UpdateStatusDTO id)
         {
             var order = await _orderService.UpdateStatus(id);
             return Ok(new {Code = 0,  data = order, message = "thay doi trang thai thanh cong" });
         }
         [HttpGet("dashboard")]
-        // [Authorize(Roles = nameof(ROLE.Admin))]
+        [Authorize(Roles = nameof(ROLE.Admin))]
         public ActionResult DashBoard()
         {
             var order = _orderService.DashBoard();

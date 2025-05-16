@@ -150,19 +150,21 @@ namespace back.controllers
 
         }
         [HttpPost("update-info")]
+        [Authorize]
         public async Task<ActionResult> UpdateInfo([FromBody] UpdateInfoRequest data)
-        {       
+        {
             await _authService.UpdateInfor(data);
-            return Ok(new {Code = 0, message = "cap nhat thanh cong" });
+            return Ok(new { Code = 0, message = "cap nhat thanh cong" });
         }
         [HttpPost("reset-password")]
+    
         public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordRequest data)
         {
             await _authService.ResetPassword(data);
-            return Ok(new {Code = 0, message = "reset success" });
+            return Ok(new { Code = 0, message = "reset success" });
         }
         [HttpPost("lock")]
-        // [Authorize(Roles = nameof(ROLE.Admin))]
+        [Authorize(Roles = nameof(ROLE.Admin))]
         public async Task<ActionResult> LockOrUnlock([FromBody] LockOrUnlockRequest data)
         {
             var result = await _authService.LockOrUnlock(data);
