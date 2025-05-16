@@ -17,8 +17,15 @@ using back.services.Categories;
 using System.Text.Json.Serialization;
 using back.services.Email;
 using BackEnd.services.VNPay;
-var builder = WebApplication.CreateBuilder(args);
-
+using BackEnd.Middleware;
+using Serilog;
+using BackEnd.Repository;
+using BackEnd.services.Ship;
+using BackEnd.services.Posts;
+using BackEnd.services.Tag;
+using BackEnd.hub;
+using BackEnd.services.Notifications;
+var builder = WebApplication.CreateBuilder(args); 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -28,7 +35,19 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-
+//http client
+builder.Services.AddHttpClient("ghn", c =>
+{
+    c.DefaultRequestHeaders.Add("Token", builder.Configuration["GHN:Token"]);
+    c.DefaultRequestHeaders.Add("ShopId", builder.Configuration["GHN:ShopId"]);
+    c.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+// log
+builder.Host.UseSerilog((context, configuration) =>
+{
+    configuration
+        .WriteTo.Console();
+});
 // Swagger
 builder.Services.AddSwaggerGen(c =>
 {
@@ -67,7 +86,7 @@ builder.Services.AddSwaggerGen(c =>
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(MyAllowSpecificOrigins,policy =>{policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();});
+    options.AddPolicy(MyAllowSpecificOrigins,policy => policy.WithOrigins("http://localhost:3000","http://localhost:5173").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 });
 
 //Mapper
@@ -81,6 +100,12 @@ builder.Services.Configure<MongoDbSetting>(builder.Configuration.GetSection("Mon
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddSingleton<MongoDbSetting>(sp => sp.GetRequiredService<IOptions<MongoDbSetting>>().Value);
 builder.Services.AddSingleton<IMongoClient>(s => new MongoClient(mongoDbSettings?.ConnectionURI));
+builder.Services.AddScoped<ErrorMiddleware>();
+//SignalR
+builder.Services.AddSignalR().AddJsonProtocol().AddHubOptions<NotificationHub>(options =>
+    {
+        options.EnableDetailedErrors = true;  // Bật chế độ lỗi chi tiết khi cần
+    });;
 //Authentication
 IdentityModelEventSource.ShowPII = true;
 builder.Services.AddIdentityMongoDbProvider<User, Role, ObjectId>(
@@ -106,47 +131,48 @@ builder.Services.AddAuthentication(options =>
 {
     opts.TokenValidationParameters = new TokenValidationParameters
     {
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["jwtOptions:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["jwtOptions:Audience"],
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true, 
-             ClockSkew = TimeSpan.Zero,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["jwtOptions:SecretKey"]!)),
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["jwtOptions:Issuer"],
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["jwtOptions:Audience"],
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ClockSkew = TimeSpan.Zero,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["jwtOptions:SecretKey"]!)),
     };
-    // opts.Events = new JwtBearerEvents
-    // {
-    
-    //     OnChallenge = async context =>
-    //     {
-    //         // context.HandleResponse();
-    //         // if (context.AuthenticateFailure is SecurityTokenExpiredException expiredException)
-    //         // {
-    //         //     context.Response.StatusCode = StatusCodes.Status410Gone;
-    //         //     context.Response.ContentType = "application/json";
-    //         //     var result = JsonSerializer.Serialize(new
-    //         //     {
-    //         //         Error = "TokenExpired",
-    //         //         Message = "Your token has expired. Please refresh your token.",
-    //         //         ExpiredAt = expiredException.Expires
-    //         //     });
-    //         //     await context.Response.WriteAsync(result);
-    //         // }
-    //         // else
-    //         // {
-    //             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-    //             context.Response.ContentType = "application/json";
-    //             var result = JsonSerializer.Serialize(new
-    //             {
-    //                 Error = "Unauthorized",
-    //                 Message = "Authentication failed."
-    //             });
-    //             await context.Response.WriteAsync(result);
-    //         }
-    //         // }
-    // };
+    opts.Events = new JwtBearerEvents
+    {
+
+        OnChallenge = async context =>
+        {
+            context.HandleResponse();
+            if (context.AuthenticateFailure is SecurityTokenExpiredException expiredException)
+            {
+                context.Response.StatusCode = StatusCodes.Status410Gone;
+                context.Response.ContentType = "application/json";
+                var result = JsonSerializer.Serialize(new
+                {
+                    Error = "TokenExpired",
+                    Message = "Your token has expired. Please refresh your token.",
+                    ExpiredAt = expiredException.Expires
+                });
+                await context.Response.WriteAsync(result);
+            }
+            else
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                var result = JsonSerializer.Serialize(new
+                {
+                    Error = "Unauthorized",
+                    Message = "Authentication failed."
+                });
+                await context.Response.WriteAsync(result);
+            }
+        }
+    };
 });
+
 // DI for services
 builder.Services.AddHostedService<ConfigureMongoDbIndexesService>();
 builder.Services.AddSingleton<ICloundinaryService, CloudinaryService>();
@@ -160,7 +186,22 @@ builder.Services.AddScoped<ICartServices, CartService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<ICategoriesService, CategoryService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IShipService, ShipService>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
+builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+//repo
+builder.Services.AddScoped<IProductRepository, ProductRepo>();
+builder.Services.AddScoped<ICartRepository, CartRepo>();
+builder.Services.AddScoped<IOrderRepository, OrderRepo>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepo>();
+builder.Services.AddScoped<IAuthorRepository, AuthorRepo>();
+builder.Services.AddScoped<IInventoryRepository, InventoryRepo>();
+builder.Services.AddScoped<IPostRepository, PostRepo>();
+builder.Services.AddScoped<ITagRepository, TagRepo>();
+builder.Services.AddScoped<INotificationRepo, NotificationRepo>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -168,13 +209,9 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+app.UseMiddleware<ErrorMiddleware>();
 
 app.UseHttpsRedirection();
-// app.Use(async (context, next) =>
-// {
-//     Console.WriteLine(context.Request.Path);
-//     await next();
-// });
 
 app.UseSwagger();
 
@@ -185,6 +222,7 @@ app.UseSwaggerUI(c =>
 });
 app.UseCors(MyAllowSpecificOrigins);
 app.MapControllers();
+app.MapHub<NotificationHub>("/notification").RequireAuthorization();
 app.UseAuthentication();
 app.UseAuthorization();
 app.Run();

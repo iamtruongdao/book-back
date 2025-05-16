@@ -9,9 +9,7 @@ namespace back.DTOs.Auth
     public class SendOtpRequest
     {
         [Required]
-        
         public string? Email { get; set; }
-       
-        
+        public string? Otp { get; set; }
     }
 }

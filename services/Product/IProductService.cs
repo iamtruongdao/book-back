@@ -12,14 +12,17 @@ namespace back.services
 {
     public interface IProductService
     {
-        public  Task<CreateProductDTO?> AddProduct( CreateProductDTO product);
-        public  Task<List<CreateProductDTO>?> AddProductMany( List<CreateProductDTO> product);
-        public Task<DeleteResult> DeleteProduct(string id);
-        public Task<ReplaceOneResult> UpdateProduct( UpdateProductDTO product);
-        public Task<ProductDTO> GetProduct(string id);
-        public Task<Product?> GetProductById(string id);
-        public Task<List<Product>> GetAllProduct();
-        public Task<List<Product>> GetSliderProduct(int limit);
-        public Task<PaginatedList<ProductDTO>> GetAllFilter(string sortOrder,string currentFilter,string searchString,string category,int pageNumber,int pageSize,decimal minPrice,decimal maxPrice );
+          Task<CreateProductDTO?> AddProduct( CreateProductDTO product);
+          Task<List<CreateProductDTO>?> AddProductMany( List<CreateProductDTO> product);
+         Task<DeleteResult> DeleteProduct(string id);
+         Task<ReplaceOneResult> UpdateProduct( UpdateProductDTO product);
+         Task<ProductDTO> GetProduct(string id);
+         Task<ProductDTO> GetProductByAuthor(string author);
+    
+         Task<List<Product>> GetAllProduct();
+         Task<List<Product>> GetSliderProduct(int limit);
+         Task<PaginatedList<ProductDTO>> GetProductWaitPublish(int pageSize = 10,int pageNumber = 1);
+         Task<PaginatedList<ProductDTO>> GetTopProduct(int year, int pageSize = 5,int pageNumber = 1);
+         Task<PaginatedList<ProductDTO>> GetAllFilter(string sortOrder,string currentFilter,string searchString,string category,int pageNumber,int pageSize,decimal minPrice,decimal maxPrice );
     }
 }

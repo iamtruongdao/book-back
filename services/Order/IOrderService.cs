@@ -4,20 +4,25 @@ using System.Linq;
 using System.Threading.Tasks;
 using back.DTOs.Order;
 using back.models;
+using back.Viewmodel;
 using BackEnd.DTOs.Order;
 namespace back.services
 {
     public interface IOrderService
     {
-   
-        public Task<(OrderCheckout, List<OrderProduct>)> Checkout(CheckoutDTO checkout);
-        public Task<AddOrderResponse> AddOrder(AddOrderDTO data);
-        public Task<Order> UpdateStatus(UpdateStatusDTO id);
-        public Task<List<Order>> GetOrder();
-        public Task<Order> GetOrderById(string id);
-        public Task<Order> UpdateStatusPayment(string id);
-        public Task SaveLinkPayment(string id,string link);
-        public object DashBoard();
+
+        Task<(OrderCheckout, List<OrderProduct>)> Checkout(CheckoutDTO checkout);
+        Task<AddOrderResponse> AddOrder(AddOrderDTO data);
+        Task<Order> UpdateStatus(UpdateStatusDTO id);
+        Task<List<Order>> GetOrder();
+        Task<List<Order>> GetOrderByUserId(string? id, OrderState? state);
+        Task<Order> GetOrderById(string id);
+        Task<Order> UpdateStatusPayment(string id);
+        Task SaveLinkPayment(string id, string link);
+        Task<PaginatedList<Order>> Filter(int pageSize, int pageNumber, OrderState? state);
+        List<DashBoardResponse> DashBoard();
+        Task<Order> CancelOrder(UpdateStatusDTO id);
+        Task<List<OrderStatisticResponse>> OrderStatistic(int year);
         
     }
 }

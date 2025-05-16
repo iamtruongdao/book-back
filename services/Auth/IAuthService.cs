@@ -5,22 +5,26 @@ using System.Threading.Tasks;
 using back.DTOs.Auth;
 
 using back.DTOs.User;
+using back.Viewmodel;
 using BackEnd.DTOs.Auth;
+using Microsoft.AspNetCore.Mvc;
 
 namespace back.services
 {
     public interface IAuthService
     {
-        public Task<LoginResponse> Login(LoginRequest request);
-        public Task<RegisterResponse> Register(RegisterRequest request);
-        public AuthenticateResponse RefreshToken(string token);
-        public Task<UserResponse> GetUser(string user_id);
-        public Task<bool> ChangePassword(ChangePasswordRequest data);
-        public Task<bool> ResetPassword(ResetPasswordRequest data);
-        public Task SendOTP(SendOtpRequest data);
-        public Task UpdateInfor(UpdateInfoRequest data);
-        public Task<bool> LockOrUnlock(LockOrUnlockRequest data);
-        public Task<List<UserResponse>> GetAllUser(int limit);
+        Task<LoginResponse> Login(LoginRequest request);
+        //  Task<ActionResult> LogOut();
+        Task<RegisterResponse> Register(RegisterRequest request);
+        AuthenticateResponse RefreshToken(string? token);
+        Task<UserResponse> GetUser(string user_id);
+        Task<bool> ChangePassword(ChangePasswordRequest data);
+        Task<bool> ResetPassword(ResetPasswordRequest data);
+        Task SendOTP(SendOtpRequest data);
+        Task UpdateInfor(UpdateInfoRequest data);
+        Task<bool> LockOrUnlock(LockOrUnlockRequest data);
+        Task<PaginatedList<UserResponse>> GetAllUser(int limit,int pageNumber);
+        Task VerifyOtp(SendOtpRequest otp);
        
     }
 }

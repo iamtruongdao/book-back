@@ -4,15 +4,16 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
+
 using AutoMapper;
 using back.DTOs.Auth;
-using back.DTOs.Author;
+
 using back.DTOs.User;
 using back.models;
 using back.services.Email;
+using back.Viewmodel;
 using BackEnd.DTOs.Auth;
+using BackEnd.Exceptions;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -47,9 +48,10 @@ namespace back.services
             return result.Succeeded;
         }
 
-        public async Task<List<UserResponse>> GetAllUser(int limit)
+        public async Task<PaginatedList<UserResponse>> GetAllUser(int limit,int pageNumber)
         {
-            var list = _userManager.Users.AsQueryable().Take(limit).ToList();
+            var list = _userManager.Users.AsQueryable().Take(limit).Skip((pageNumber-1)*limit).ToList();
+            var total = _userManager.Users.Count();
             foreach (var item in list)
             {
                 item.Roles = (await _userManager.GetRolesAsync(item)).ToList();
@@ -57,7 +59,7 @@ namespace back.services
             }
             var userRes = _mapper.Map<List<UserResponse>>(list);
 
-            return userRes;
+            return new PaginatedList<UserResponse>(userRes, total, pageNumber, limit);
         }
 
         public async Task<UserResponse> GetUser(string user_id)
@@ -85,28 +87,22 @@ namespace back.services
             var userExist = await _userManager.FindByEmailAsync(request.Email!);
             if (userExist is null)
             {
-                return new LoginResponse
-                {
-                    Success = false,
-                    Message = "Invalid Email/Password"
-                };
+                throw new NotFoundException("Invalid Email/Password");
+                
             }
             if (await _userManager.IsLockedOutAsync(userExist))
             {
-                return new LoginResponse
-                {
-                    Success = false,
-                    Message = "Tài Khoản của bạn đã bị khóa"
-                };
+                throw new NotFoundException("Tài Khoản của bạn đã bị khóa");
             }
             var checkPassword = await _userManager.CheckPasswordAsync(userExist, request.Password!);
-            if (!checkPassword) return new LoginResponse
+            if (!checkPassword) 
             {
-                Success = false,
-                Message = "Invalid Email/Password"
+             throw new NotFoundException("Invalid Email/Password");
+
             };
             var claims = new List<Claim>{
                 new Claim(JwtRegisteredClaimNames.Sub, userExist.Id.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, userExist.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, userExist.Email!),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.Name,userExist.FullName!)
@@ -126,13 +122,14 @@ namespace back.services
                 Roles = roles.ToList()
             };
         }
+        
 
-
-        public AuthenticateResponse RefreshToken(string token)
+        public AuthenticateResponse RefreshToken(string? token)
         {
+            if (token is null) throw new UnAuthorizeException("please login");
             var claimsPrincipal = _tokenService.GetPrincipalFromExpiredToken(token);
             var newAccessToken = _tokenService.GenerateAccessToken(claimsPrincipal.Claims);
-            var newRefreshToken = _tokenService.GenerateAccessToken(claimsPrincipal.Claims);
+            var newRefreshToken = _tokenService.GenerateRefreshToken(claimsPrincipal.Claims);
             return new AuthenticateResponse
             {
                 AccessToken = newAccessToken,
@@ -140,9 +137,6 @@ namespace back.services
             };
 
         }
-
-
-
         public async Task<RegisterResponse> Register(RegisterRequest request)
         {
             var userExist = await _userManager.FindByEmailAsync(request.Email!);
@@ -177,11 +171,8 @@ namespace back.services
         public async Task<bool> ResetPassword(ResetPasswordRequest data)
         {
             var user = await _userManager.FindByEmailAsync(data.Email!);
-            if (user is null) throw new Exception("user not found");
-            if (user.Otp != data.Otp)
-            {
-                throw new Exception("otp invalid or expire time");
-            }
+            if (user is null) throw new NotFoundException("user not found");
+         
             await _userManager.RemovePasswordAsync(user);
             await _userManager.AddPasswordAsync(user, data.Password!);
             return true;
@@ -190,7 +181,7 @@ namespace back.services
         public async Task SendOTP(SendOtpRequest data)
         {
             var user = await _userManager.FindByEmailAsync(data.Email!);
-            if (user is null) throw new Exception("error user not found");
+            if (user is null) throw new NotFoundException("error user not found");
             int otp = RandomNumberGenerator.GetInt32(100000, 999999);
             user.Otp = otp.ToString();
             user.OtpExprire = DateTime.Now.AddMinutes(5);
@@ -200,13 +191,24 @@ namespace back.services
         public async Task UpdateInfor(UpdateInfoRequest data)
         {
             var user = await _userManager.FindByEmailAsync(data.Email!);
-            if (user is null) throw new Exception("error user not found");
-          
+            if (user is null) throw new NotFoundException("error user not found");
+            
             user.FullName = data.FullName;
             user.PhoneNumber = data.PhoneNumber;
             user.Address = data.Address;
             await _userManager.UpdateAsync(user);
             
+        }
+
+        public async Task VerifyOtp(SendOtpRequest data)
+        {
+            var user = await _userManager.FindByEmailAsync(data.Email!);
+            if (user is null) throw new NotFoundException("error user not found");
+            if (user.Otp != data.Otp)
+            {
+                throw new NotFoundException("otp invalid or expire time");
+            }
+          
         }
     }
 }

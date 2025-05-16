@@ -12,13 +12,12 @@ namespace back.services
 {
     public interface ICartServices
     {
-        public Task<Cart> CreateUserCart(AddProductToCartDTO product);
-        public Task<Cart> UpdateUserCartQuantity(AddProductToCartDTO product);
-        public Task<Cart> AddProductToCart(AddProductToCartDTO product);
-        public Task<Cart> AddProductToCartExist(AddProductToCartDTO product);
-        public Task<Cart> IncOrDecProductQuantity(IncOrDecProductQuantityDTO product);
-        public IEnumerable<CartResponse> GetCart( string user_id);
-        public Task<Cart> DeleteCart( DeleteItemDTO product);
-        public Task<Cart> FindById( string Id);
+    
+        public Task<Cart> UpdateUserCartQuantity(AddProductToCartDTO cart);
+        public Task<Cart> AddProductToCart(AddProductToCartDTO cart);
+    
+        public Task<Cart> IncOrDecProductQuantity(IncOrDecProductQuantityDTO cart);
+        public CartResponse GetCart( string user_id);
+        public Task<Cart> DeleteCart( DeleteItemDTO cart);
     }
 }

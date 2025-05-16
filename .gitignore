@@ -3,4 +3,3 @@ obj/
 .fake
 .vscode
 appsettings.json
-appsettings.Development.json

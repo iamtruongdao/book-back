@@ -11,6 +11,9 @@ using back.DTOs.Product;
 using back.DTOs.Role;
 using back.DTOs.User;
 using back.models;
+using BackEnd.DTOs.Posts;
+using BackEnd.DTOs.Tag;
+using BackEnd.models;
 using Microsoft.AspNetCore.Identity;
 
 namespace back.helper
@@ -32,7 +35,10 @@ namespace back.helper
             CreateMap<CreateCatDTO, Category>();
             CreateMap<UpdateCatDTO, Category>();
             CreateMap<User, UserResponse>().ForMember(dest => dest.IsLocked, opt => opt.MapFrom(src => src.LockoutEnd.HasValue && src.LockoutEnd > DateTime.UtcNow));
-
+            CreateMap<CreatePostDto, Post>();
+            CreateMap<UpdatePostDto, Post>();
+            CreateMap<CreateTagDto, Tags>();
+            CreateMap<UpdateTagDto, Tags>();
         }
         
     }

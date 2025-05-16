@@ -21,9 +21,13 @@ namespace back.models
         public OrderState OrderStatus { get; set; } = OrderState.Pending;
         [BsonRepresentation(BsonType.String)]
         public PAYMENT OrderPayment { get; set; }
-        public int OrderCode { get; set; }
+        public string? OrderCode { get; set; }
+        public string? TrackingNumber { get; set; }
+        [BsonRepresentation(BsonType.String)]
+
+        public PaymentStatus? PaymentStatus { get; set; }
         public string? LinkPayment { get; set; }
- 
+        public DateTime? DeleveredAt { get; set; }    
         [BsonRepresentation(BsonType.DateTime)]
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -34,6 +38,7 @@ namespace back.models
         public string? City { get; set; }
         public string? FullName { get; set; }
         public string? PhoneNumber { get; set; }
+        public string? Address { get; set; }
 
     }
     public class OrderItem {
@@ -60,15 +65,23 @@ namespace back.models
     public enum PAYMENT
     {
         COD,
-        ONLINE
+        VNPAY
     }
-    public enum OrderState
+    public enum PaymentStatus
+    {
+        Paid,
+        WaitingPaid,
+        Refund,
+        Failed
+    }
+    public enum OrderState      
     {
         Pending,
-        Confirmed,
+        WaitingPickup,
         Shipping,
         Cancel,
         Delivered,
-        Paid
+       
+    
     }
 }

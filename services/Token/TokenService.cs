@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using back.Viewmodel;
+using BackEnd.Exceptions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -21,11 +22,13 @@ namespace back.services
         {
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey!));
             var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+            var filteredClaims = claims
+            .Where(c => c.Type != JwtRegisteredClaimNames.Aud && c.Type != "aud");
             var tokeOptions = new JwtSecurityToken(
                 issuer: _jwtOptions.Issuer,
                 audience: _jwtOptions.Audience,
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(60),
+                claims: filteredClaims,
+                expires: DateTime.UtcNow.AddMinutes(60),
                 signingCredentials: signinCredentials
             );
             var tokenString = new JwtSecurityTokenHandler().WriteToken(tokeOptions);
@@ -36,11 +39,13 @@ namespace back.services
         {
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey!));
             var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+            var filteredClaims = claims
+            .Where(c => c.Type != JwtRegisteredClaimNames.Aud && c.Type != "aud");
             var tokeOptions = new JwtSecurityToken(
                 issuer: _jwtOptions.Issuer,
                 audience: _jwtOptions.Audience,
-                claims: claims,
-                expires: DateTime.Now.AddDays(7),
+                claims: filteredClaims,
+                expires: DateTime.UtcNow.AddDays(7),
                 signingCredentials: signinCredentials
             );
             var tokenString = new JwtSecurityTokenHandler().WriteToken(tokeOptions);
@@ -51,6 +56,7 @@ namespace back.services
         {
             try
             {
+                
                 var tokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateAudience = true, //you might want to validate the audience and issuer depending on your use case
@@ -71,8 +77,7 @@ namespace back.services
             }
             catch (SecurityTokenExpiredException ex)
             {
-                
-                throw new Exception($"Refresh token expired at {ex.Expires}", ex);
+                throw new UnAuthorizeException($"Refresh token expired at {ex.Expires}");
             }
         }
     }
