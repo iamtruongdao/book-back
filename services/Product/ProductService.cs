@@ -129,7 +129,6 @@ namespace BackEnd.services
                 var cate = await _categoryRepo.FindBySlug(category);
                 filters.Add(buildFilter.AnyEq(x => x.Cat, cate.Id!));
             }
-            
             // Combine all filters
             var filter = filters.Any() ? buildFilter.And(filters) : buildFilter.Empty;
           

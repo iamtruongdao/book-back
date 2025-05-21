@@ -22,12 +22,14 @@ namespace BackEnd.services
         {
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey!));
             var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
-            var filteredClaims = claims
+            var distinctClaims = claims
+            .GroupBy(c => c.Type)
+            .Select(g => g.First()) // lấy claim đầu tiên theo type
             .Where(c => c.Type != JwtRegisteredClaimNames.Aud && c.Type != "aud");
             var tokeOptions = new JwtSecurityToken(
                 issuer: _jwtOptions.Issuer,
                 audience: _jwtOptions.Audience,
-                claims: filteredClaims,
+                claims: distinctClaims,
                 expires: DateTime.UtcNow.AddMinutes(60),
                 signingCredentials: signinCredentials
             );
@@ -39,12 +41,14 @@ namespace BackEnd.services
         {
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey!));
             var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
-            var filteredClaims = claims
+            var distinctClaims = claims
+            .GroupBy(c => c.Type)
+            .Select(g => g.First()) // lấy claim đầu tiên theo type
             .Where(c => c.Type != JwtRegisteredClaimNames.Aud && c.Type != "aud");
             var tokeOptions = new JwtSecurityToken(
                 issuer: _jwtOptions.Issuer,
                 audience: _jwtOptions.Audience,
-                claims: filteredClaims,
+                claims: distinctClaims,
                 expires: DateTime.UtcNow.AddDays(7),
                 signingCredentials: signinCredentials
             );
