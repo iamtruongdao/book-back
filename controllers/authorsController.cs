@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using back.DTOs.Author;
+using BackEnd.DTOs.Author;
 
-using back.models;
-using back.services;
-using back.Viewmodel;
+using BackEnd.models;
+using BackEnd.services;
+using BackEnd.Viewmodel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace back.controllers
+namespace BackEnd.controllers
 {
     [ApiController]
     [Route("api/[controller]")]

@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using back.DTOs.Auth;
+using BackEnd.DTOs.Auth;
 
-namespace back.DTOs.User
+namespace BackEnd.DTOs.User
 {
     public class LoginResponse
     {

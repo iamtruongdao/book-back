@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using back.DTOs.Author;
-using back.DTOs.Categories;
-using back.DTOs.Product;
-using back.models;
-using back.Viewmodel;
+using BackEnd.DTOs.Author;
+using BackEnd.DTOs.Categories;
+using BackEnd.DTOs.Product;
+using BackEnd.models;
+using BackEnd.Viewmodel;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
-namespace back.services
+namespace BackEnd.services
 {
     public interface ICategoriesService
     {

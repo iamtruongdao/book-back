@@ -34,6 +34,7 @@ namespace BackEnd.Middleware
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex);
                 logger.LogError(ex.Message);
                 context.Response.StatusCode = 500;
                 await context.Response.WriteAsJsonAsync(new { message = "Internal Server Error" });

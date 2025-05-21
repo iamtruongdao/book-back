@@ -3,26 +3,28 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using back.DTOs.Auth;
-using back.DTOs.Author;
-using back.DTOs.Categories;
-using back.DTOs.Inventory;
-using back.DTOs.Product;
-using back.DTOs.Role;
-using back.DTOs.User;
-using back.models;
+using BackEnd.DTOs.Auth;
+using BackEnd.DTOs.Author;
+using BackEnd.DTOs.Categories;
+using BackEnd.DTOs.Inven;
+using BackEnd.DTOs.Product;
+using BackEnd.DTOs.Role;
+using BackEnd.DTOs.User;
+using BackEnd.models;
+using BackEnd.DTOs.Discounts;
 using BackEnd.DTOs.Posts;
 using BackEnd.DTOs.Tag;
-using BackEnd.models;
-using Microsoft.AspNetCore.Identity;
+using BackEnd.DTOs.UserDiscounts;
 
-namespace back.helper
-{
+
+
+namespace BackEnd.helper
+{   
     public class MapperConfig:Profile
     {
-       
+
         public MapperConfig()
-        { 
+        {
             CreateMap<ProductDTO, Product>();
             CreateMap<CreateProductDTO, Product>().ReverseMap();
             CreateMap<UpdateProductDTO, Product>().ReverseMap();
@@ -39,6 +41,10 @@ namespace back.helper
             CreateMap<UpdatePostDto, Post>();
             CreateMap<CreateTagDto, Tags>();
             CreateMap<UpdateTagDto, Tags>();
+            CreateMap<CreateDiscountDto, Discount>();
+            CreateMap<UpdateDiscountDto, Discount>();
+            CreateMap<SaveDiscountDto, UserDiscount>();
+
         }
         
     }

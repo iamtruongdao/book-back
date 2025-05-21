@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Google.Api;
 
-namespace back.Viewmodel
+namespace BackEnd.Viewmodel
 {
     public class PaginatedList<T>
     {

@@ -5,12 +5,12 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using back.Viewmodel;
+using BackEnd.Viewmodel;
 using BackEnd.Exceptions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace back.services
+namespace BackEnd.services
 {
     public class TokenService : ITokenService
     {

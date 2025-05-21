@@ -6,7 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.EntityFrameworkCore;  
 
-namespace back.models
+namespace BackEnd.models
 {
     [Collection("Categories")]
     public class Category

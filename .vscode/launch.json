@@ -11,7 +11,7 @@
       "preLaunchTask": "build",
       "justMyCode": true,
       // If you have changed target frameworks, make sure to update the program path.
-      "program": "${workspaceFolder}/bin/Debug/net9.0/back.dll",
+      "program": "${workspaceFolder}/bin/Debug/net9.0/BackEnd.dll",
       "args": [],
       "cwd": "${workspaceFolder}",
       "stopAtEntry": false,

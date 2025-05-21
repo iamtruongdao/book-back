@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using back.DTOs.Order;
-using back.models;
-using back.services;
 using BackEnd.DTOs.Order;
+using BackEnd.models;
+using BackEnd.services;
 using BackEnd.DTOs.VNPay;
 using BackEnd.services.VNPay;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace back.controllers
+namespace BackEnd.controllers
 {
     [ApiController]
     [Route("api/[controller]")]

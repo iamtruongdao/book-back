@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace back.DTOs.Inventory
+namespace BackEnd.DTOs.Inven
 {
     public class AddStockToInventoryDTO
     {

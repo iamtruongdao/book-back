@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace back.models
+namespace BackEnd.models
 {
     public class Order
     {
@@ -59,6 +59,7 @@ namespace back.models
     public class OrderCheckout
     {
         public decimal TotalPrice { get; set; }
+        public decimal VoucherDiscount { get; set; }
         public decimal TotalApplyDiscount { get; set; }
         public decimal FeeShip { get; set; }
     }

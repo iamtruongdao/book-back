@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using back.models;
+using BackEnd.models;
 using BackEnd.DTOs.Ship;
 using BackEnd.services.Ship;
 using Microsoft.AspNetCore.Authorization;

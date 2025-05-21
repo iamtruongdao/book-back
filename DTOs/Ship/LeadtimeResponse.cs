@@ -9,7 +9,7 @@ namespace BackEnd.DTOs.Ship
     {
         public int Code { get; set; }
         public string? Message { get; set; }
-        public LeadtimeData Data { get; set; }
+        public LeadtimeData? Data { get; set; }
     }
     public class LeadtimeData
     {

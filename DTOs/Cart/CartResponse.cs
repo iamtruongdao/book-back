@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using back.models;
+using BackEnd.models;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace back.DTOs.Cart
+namespace BackEnd.DTOs.Cart
 {
     public class CartResponse
     {

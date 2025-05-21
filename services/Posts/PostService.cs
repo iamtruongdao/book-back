@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using back.services;
-using back.Viewmodel;
+using BackEnd.services;
+using BackEnd.Viewmodel;
 using BackEnd.DTOs.Posts;
 
 using BackEnd.Exceptions;
@@ -12,7 +12,7 @@ using BackEnd.models;
 using BackEnd.Repository;
 
 namespace BackEnd.services.Posts
-{
+{       
     public class PostService : IPostService
     {
         private readonly IPostRepository _postRepository;

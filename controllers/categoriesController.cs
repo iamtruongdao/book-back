@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using back.DTOs.Categories;
-using back.models;
-using back.services;
-using back.Viewmodel;
+using BackEnd.DTOs.Categories;
+using BackEnd.models;
+using BackEnd.services;
+using BackEnd.Viewmodel;
 using BackEnd.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
-namespace back.controllers
+namespace BackEnd.controllers
 {
     [ApiController]
     [Route("api/[controller]")]

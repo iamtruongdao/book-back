@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using back.DTOs.Cart;
-using back.models;
+using BackEnd.DTOs.Cart;
+using BackEnd.models;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace back.services
+namespace BackEnd.services
 {
     public interface ICartServices
     {

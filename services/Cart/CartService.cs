@@ -4,15 +4,15 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using AutoMapper;
-using back.DTOs.Cart;
-using back.models;
+using BackEnd.DTOs.Cart;
+using BackEnd.models;
 using BackEnd.Exceptions;
 using BackEnd.Repository;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
-namespace back.services
+namespace BackEnd.services
 {
     public class CartService : ICartServices
     {

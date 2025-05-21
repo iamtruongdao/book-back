@@ -4,11 +4,11 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using back.DTOs.Role;
-using back.models;
+using BackEnd.DTOs.Role;
+using BackEnd.models;
 using Microsoft.AspNetCore.Identity;
 
-namespace back.services
+namespace BackEnd.services
 {
     public class RoleService : IRoleService
     {

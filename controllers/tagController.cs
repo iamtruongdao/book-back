@@ -3,9 +3,9 @@ using BackEnd.models;
 using BackEnd.services.Tag;
 using BackEnd.DTOs.Tag;
 using Microsoft.AspNetCore.Authorization;
-using back.models;
 
-namespace back.Controllers;
+
+namespace BackEnd.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

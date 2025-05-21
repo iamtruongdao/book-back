@@ -4,7 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace back.services
+namespace BackEnd.services
 {
     public interface ITokenService
     {

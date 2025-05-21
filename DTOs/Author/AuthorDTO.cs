@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 
-namespace back.DTOs.Author
+namespace BackEnd.DTOs.Author
 {
     public class AuthorDTO
     {
