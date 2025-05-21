@@ -4,18 +4,18 @@ using System.Linq;
 using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using back.DTOs.Auth;
-using back.DTOs.User;
-using back.models;
-using back.services;
 using BackEnd.DTOs.Auth;
+using BackEnd.DTOs.User;
+using BackEnd.models;
+using BackEnd.services;
+
 using BackEnd.Exceptions;
 using Google.Rpc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 
-namespace back.controllers
+namespace BackEnd.controllers
 {
     [ApiController]
     [Route("api/[controller]")]

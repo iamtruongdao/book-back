@@ -1,6 +1,6 @@
-using back.helper;
-using back.models;
-using back.services;
+using BackEnd.helper;
+using BackEnd.models;
+using BackEnd.services;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
@@ -11,11 +11,11 @@ using Microsoft.AspNetCore.Identity;
 using System.Text;
 using Microsoft.IdentityModel.Logging;
 using MongoDB.Bson;
-using back.Viewmodel;
+using BackEnd.Viewmodel;
 using System.Text.Json;
-using back.services.Categories;
+using BackEnd.services.Categories;
 using System.Text.Json.Serialization;
-using back.services.Email;
+using BackEnd.services.Email;
 using BackEnd.services.VNPay;
 using BackEnd.Middleware;
 using Serilog;
@@ -25,6 +25,8 @@ using BackEnd.services.Posts;
 using BackEnd.services.Tag;
 using BackEnd.hub;
 using BackEnd.services.Notifications;
+using BackEnd.services.Discounts;
+using BackEnd.services.UserDiscounts;
 var builder = WebApplication.CreateBuilder(args); 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -191,6 +193,8 @@ builder.Services.AddScoped<IVNPayService, VNPayService>();
 builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IDiscountService, DiscountService>();
+builder.Services.AddScoped<IUserDiscountService, UserDiscountService>();
 
 //repo
 builder.Services.AddScoped<IProductRepository, ProductRepo>();
@@ -202,6 +206,8 @@ builder.Services.AddScoped<IInventoryRepository, InventoryRepo>();
 builder.Services.AddScoped<IPostRepository, PostRepo>();
 builder.Services.AddScoped<ITagRepository, TagRepo>();
 builder.Services.AddScoped<INotificationRepo, NotificationRepo>();
+builder.Services.AddScoped<IDiscountRepository, DiscountRepo>();
+builder.Services.AddScoped<IUserDiscountRepository, UserVoucherRepo>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

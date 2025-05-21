@@ -9,7 +9,7 @@ using MongoDB.EntityFrameworkCore;
 using System.Text.Json;
 using System.ComponentModel.DataAnnotations;
 
-namespace back.models
+namespace BackEnd.models
 {
 
     [Collection("Products")]

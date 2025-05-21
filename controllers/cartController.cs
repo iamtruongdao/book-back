@@ -1,12 +1,12 @@
 
-using back.DTOs.Cart;
-using back.models;
-using back.services;
+using BackEnd.DTOs.Cart;
+using BackEnd.models;
+using BackEnd.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 
-namespace back.controllers
+namespace BackEnd.controllers
 {
     [ApiController]
     [Route("api/[controller]")]

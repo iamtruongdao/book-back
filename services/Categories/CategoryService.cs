@@ -4,14 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 
-using back.DTOs.Categories;
+using BackEnd.DTOs.Categories;
 
-using back.models;
-using back.Viewmodel;
+using BackEnd.models;
+using BackEnd.Viewmodel;
 using BackEnd.Repository;
 using MongoDB.Driver;
 using Slugify;
-namespace back.services.Categories
+namespace BackEnd.services.Categories
 {
     public class CategoryService: ICategoriesService
     {

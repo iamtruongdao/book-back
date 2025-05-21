@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
-using back.models;
+using BackEnd.models;
 
-namespace back.DTOs.Order
+namespace BackEnd.DTOs.Order
 {
     public class AddOrderDTO
     {

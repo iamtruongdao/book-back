@@ -6,7 +6,7 @@ using AspNetCore.Identity.Mongo.Model;
 using MongoDB.Bson;
 using MongoDB.EntityFrameworkCore;
 
-namespace back.models
+namespace BackEnd.models
 {
     [Collection("Roles")]
     public class Role:MongoRole<ObjectId>

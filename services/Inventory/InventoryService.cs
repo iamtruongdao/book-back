@@ -1,14 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
 using AutoMapper;
-using back.DTOs.Inventory;
-using back.models;
+using BackEnd.DTOs.Inven;
+using BackEnd.models;
 using BackEnd.Repository;
 using MongoDB.Driver;
 
-namespace back.services
+namespace BackEnd.services
 {
     public class InventoryService:IInventoryService
     {
@@ -25,6 +22,8 @@ namespace back.services
         {
             await _inventoryRepo.Insert(_mapper.Map<Inventory>(data));
         }
+
+      
 
         public async Task<UpdateResult> ReservationInventory(string productId, string cartId, int quantity)
         {

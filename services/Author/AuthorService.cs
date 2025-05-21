@@ -1,12 +1,12 @@
 using AutoMapper;
-using back.DTOs.Author;
-using back.models;
-using back.Viewmodel;
+using BackEnd.DTOs.Author;
+using BackEnd.models;
+using BackEnd.Viewmodel;
 using BackEnd.Exceptions;
 using BackEnd.Repository;
 using MongoDB.Driver;
 using Slugify;
-namespace back.services
+namespace BackEnd.services
 {
     public class AuthorService: IAuthorService
     {

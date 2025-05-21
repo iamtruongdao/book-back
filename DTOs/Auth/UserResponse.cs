@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace back.DTOs.Auth
+namespace BackEnd.DTOs.Auth
 {
     public class UserResponse
     {

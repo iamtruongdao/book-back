@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using back.DTOs.Order;
-using back.models;
-using back.Viewmodel;
 using BackEnd.DTOs.Order;
-namespace back.services
+using BackEnd.models;
+using BackEnd.Viewmodel;
+
+namespace BackEnd.services
 {
     public interface IOrderService
     {

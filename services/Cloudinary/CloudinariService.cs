@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using dotenv.net;
-namespace back.services
+namespace BackEnd.services
 {
     public class CloudinaryService:ICloundinaryService
     {

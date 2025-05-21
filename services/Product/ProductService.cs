@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using back.DTOs.Inventory;
-using back.DTOs.Product;
-using back.models;
-using back.Viewmodel;
+using BackEnd.DTOs.Inven;
+using BackEnd.DTOs.Product;
+using BackEnd.models;
+using BackEnd.Viewmodel;
 using BackEnd.Exceptions;
 using BackEnd.Repository;
 using CloudinaryDotNet;
@@ -18,7 +18,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using Slugify;
-namespace back.services
+namespace BackEnd.services
 {
     public class ProductService
      : IProductService
@@ -126,7 +126,8 @@ namespace back.services
             // Category
             if (!string.IsNullOrEmpty(category))
             {
-                filters.Add(buildFilter.AnyEq(x => x.Cat, category));
+                var cate = await _categoryRepo.FindBySlug(category);
+                filters.Add(buildFilter.AnyEq(x => x.Cat, cate.Id!));
             }
             
             // Combine all filters

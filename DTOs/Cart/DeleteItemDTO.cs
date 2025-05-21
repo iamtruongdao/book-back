@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace back.DTOs.Cart
+namespace BackEnd.DTOs.Cart
 { 
     public class DeleteItemDTO
     {

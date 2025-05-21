@@ -4,12 +4,12 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime;
 using System.Threading.Tasks;
-using back.DTOs.Author;
-using back.models;
+using BackEnd.DTOs.Author;
+using BackEnd.models;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace back.DTOs.Product
+namespace BackEnd.DTOs.Product
 {
     public class ProductDTO
     {

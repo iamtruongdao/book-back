@@ -6,13 +6,13 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 
 using AutoMapper;
-using back.DTOs.Auth;
-
-using back.DTOs.User;
-using back.models;
-using back.services.Email;
-using back.Viewmodel;
 using BackEnd.DTOs.Auth;
+
+using BackEnd.DTOs.User;
+using BackEnd.models;
+using BackEnd.services.Email;
+using BackEnd.Viewmodel;
+
 using BackEnd.Exceptions;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Identity;
@@ -20,7 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 
-namespace back.services
+namespace BackEnd.services
 {
     public class AuthService : IAuthService
     {
@@ -99,7 +99,7 @@ namespace back.services
             {
              throw new NotFoundException("Invalid Email/Password");
 
-            };
+            };  
             var claims = new List<Claim>{
                 new Claim(JwtRegisteredClaimNames.Sub, userExist.Id.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, userExist.Id.ToString()),

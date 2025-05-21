@@ -5,24 +5,25 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using back.DTOs.Order;
-using back.models;
-using back.Viewmodel;
 using BackEnd.DTOs.Order;
+using BackEnd.models;
+using BackEnd.Viewmodel;
+using BackEnd.DTOs.Discounts;
+
 using BackEnd.DTOs.Ship;
 using BackEnd.Exceptions;
 using BackEnd.hub;
-using BackEnd.models;
+
 using BackEnd.Repository;
+using BackEnd.services.Discounts;
 using BackEnd.services.Ship;
-using Microsoft.AspNetCore.Server.IIS;
 using Microsoft.AspNetCore.SignalR;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 
-namespace back.services
+namespace BackEnd.services
 {
     public class OrderService : IOrderService
     {
@@ -33,7 +34,8 @@ namespace back.services
         private readonly INotificationRepo _notificationRepo;
         private readonly IInventoryService _inventoryService;
         private readonly IHubContext<NotificationHub> _hubContext;
-        public OrderService(ICartRepository cartRepo, IInventoryService inventoryService, IOrderRepository orderRepo, IProductRepository productRepo, IShipService shipService, IHubContext<NotificationHub> hubContext, INotificationRepo notificationRepo)
+        private readonly IDiscountService _discountService;
+        public OrderService(ICartRepository cartRepo, IInventoryService inventoryService, IOrderRepository orderRepo, IProductRepository productRepo, IShipService shipService, IHubContext<NotificationHub> hubContext, INotificationRepo notificationRepo, IDiscountService discountService)
         {
             _notificationRepo = notificationRepo;
             _hubContext = hubContext;
@@ -42,6 +44,7 @@ namespace back.services
             _productRepo = productRepo;
             _shipService = shipService;
             _inventoryService = inventoryService;
+            _discountService = discountService;
         }
       
         
@@ -67,7 +70,7 @@ namespace back.services
                 ToWardCode = data.Address.Street,
                 ServiceId = 53320
             });
-            DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(deleveryTime.Data.Leadtime * 1000);
+            DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(deleveryTime.Data!.Leadtime * 1000);
             var order = new Order
             {
                 OrderAddress = data.Address,
@@ -80,7 +83,11 @@ namespace back.services
                 DeleveredAt = dateTimeOffset.UtcDateTime,
 
             };
+             var result = await _discountService.UpdateUserUse(data.Checkout.UserId!, data.Checkout.Vouchers[0]);
+             if(result.MatchedCount == 0) throw new NotFoundException("error please try again");
             await _orderRepo.Insert(order);
+           
+            
             if (!String.IsNullOrEmpty(order.Id))
             {
                 foreach (var item in orderProduct)
@@ -113,43 +120,67 @@ namespace back.services
         {
             var cart = _cartRepo.FindById(checkout.CartId);
             if (cart is null) throw new NotFoundException("cart is not exists");
-            decimal totalPrice = 0, totalApplyDiscount = 0, feeShip = 0;
-            float amount = 0, totalAmount = 0;
+            var totalCheckout = new OrderCheckout
+            {
+                FeeShip = 0,
+                TotalPrice = 0,
+                VoucherDiscount = 0,
+                TotalApplyDiscount = 0,
+            } ;
+            decimal totalPrice = 0, totalApplyDiscount = 0;
+            float  totalAmount = 0;
             var items = checkout.Items!;
             List<OrderProduct> listOrder = new List<OrderProduct>();
             foreach (var item in items)
             {
+                float amount = 0;
                 var product = await _productRepo.FindById(item.ProductId!);
                 if (product is null) throw new BadRequestException("product not found");
-                var price = product.ProductPrice * item.Quantity;
-                totalPrice += price;
+                var quantity = item.Quantity;
+                var unitPrice = product.ProductPrice;
+                var itemTotalPrice = unitPrice * quantity;
+                totalPrice += itemTotalPrice;
                 if (product.Discount != 0)
                 {
-                    amount = (float)item.Quantity * (float)product.ProductPrice * product.Discount / 100;
+                    amount = (float)item.Quantity * (float)product.ProductPrice * product.Discount / 100;//giảm giá trên từng  sản phẩm
                     totalAmount += amount;
                 }
                 listOrder.Add(new OrderProduct
                 {
-                    TotalPrice = price,
-                    TotalApplyDiscount = price - (decimal)amount,
+                    TotalPrice = itemTotalPrice,
+                    TotalApplyDiscount = itemTotalPrice - (decimal)amount,
                     Item = new OrderItem
                     {
                         Avatar = product.Avatar,
-                        Discount = item.Discount,
-                        Price = item.Price,
+                        Discount = amount,
+                        Price = product.ProductPrice,
                         ProductId = product.Id,
                         ProductName = product.ProductName,
                         Quantity = item.Quantity
                     }
                 });
             }
-            totalApplyDiscount = totalPrice - (decimal)totalAmount;
-            return (new OrderCheckout
+            if (checkout.Vouchers.Count > 0)
             {
-                FeeShip = feeShip,
-                TotalApplyDiscount = totalApplyDiscount,
-                TotalPrice = totalPrice
-            }, listOrder);
+                foreach (var voucher in checkout.Vouchers)
+                {
+                    var discount = await _discountService.GetAmount(new GetAmountRequest
+                    {
+                        CodeId = voucher,
+                        UserId = checkout.UserId,
+                        Items = items
+                    });
+                    if (discount is null) throw new NotFoundException("voucher not found");
+                    if (discount.Amount > 0)
+                    {
+                        totalCheckout.VoucherDiscount += discount.Amount;
+                    }
+                }
+            }
+            totalApplyDiscount = totalPrice - (decimal)totalAmount;
+            totalCheckout.TotalPrice = totalPrice;
+            totalCheckout.TotalApplyDiscount = totalApplyDiscount - totalCheckout.VoucherDiscount;
+            return (totalCheckout, listOrder);
         }
 
         public List<DashBoardResponse> DashBoard()

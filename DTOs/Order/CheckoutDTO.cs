@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using back.models;
+using BackEnd.models;
 
-namespace back.DTOs.Order
+namespace BackEnd.DTOs.Order
 {
     public class CheckoutDTO
     {
         public required string UserId { get; set; }
         public required string CartId { get; set; }
+        public  List<string> Vouchers { get; set; } = new List<string>();
         public List<OrderItemsDTO>? Items { get; set; }
     }
     public class OrderItemsDTO    

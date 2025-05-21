@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using back.DTOs.Role;
+using BackEnd.DTOs.Role;
 
-namespace back.services
+namespace BackEnd.services
 {
     public interface IRoleService
     {

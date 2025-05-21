@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using back.models;
+using BackEnd.models;
 using BackEnd.DTOs.Posts;
 using BackEnd.services.Posts;
 using Microsoft.AspNetCore.Authorization;
