@@ -83,11 +83,12 @@ namespace BackEnd.services
                 DeleveredAt = dateTimeOffset.UtcDateTime,
 
             };
-             var result = await _discountService.UpdateUserUse(data.Checkout.UserId!, data.Checkout.Vouchers[0]);
-             if(result.MatchedCount == 0) throw new NotFoundException("error please try again");
+            if (data.Checkout.Vouchers.Count > 0)
+            {
+                var result = await _discountService.UpdateUserUse(data.Checkout.UserId!, data.Checkout.Vouchers[0]);
+                if(result.MatchedCount == 0) throw new NotFoundException("error please try again");
+            }
             await _orderRepo.Insert(order);
-           
-            
             if (!String.IsNullOrEmpty(order.Id))
             {
                 foreach (var item in orderProduct)
@@ -183,9 +184,9 @@ namespace BackEnd.services
             return (totalCheckout, listOrder);
         }
 
-        public List<DashBoardResponse> DashBoard()
+        public async Task<List<DashBoardResponse>> DashBoard()
         {
-            return _orderRepo.GetOrderStatusCount();
+            return await _orderRepo.GetOrderStatusCount();
         }
 
         public async Task<PaginatedList<Order>> Filter(int pageSize, int pageNumber, OrderState? state)
@@ -206,34 +207,47 @@ namespace BackEnd.services
             return await _orderRepo.GetOrderById(id);
         }
 
-        public async Task<List<Order>> GetOrderByUserId(string? id,OrderState? state)
+        public async Task<PaginatedList<Order>> GetOrderByUserId(int pageNumber, int pageSize, string? id, OrderState? state = null, PaymentStatus? paymentStatus = null)
         {
-            if (id == null) throw new UnAuthorizeException("please login!");
-            if(state == null) return await _orderRepo.FindByUserId(id);
-            return await _orderRepo.FindByState(id, state.Value);
+            if (id == null) throw new UnAuthorizeException("please login to continue");
+            PaginatedList<Order> result;
+            if (state.HasValue)
+            {
+                result = await _orderRepo.FindByState(pageNumber, pageSize, id, state.Value);
+            }
+            else if (paymentStatus.HasValue)
+            {
+                result = await _orderRepo.FindByPaymentState(pageNumber, pageSize, id, paymentStatus.Value);
+            }
+            else
+            {
+                // Lấy tất cả orders
+                result = await _orderRepo.FindByUserId(pageNumber, pageSize, id);
+            }
+            return result;
         }
 
         public async Task<List<OrderStatisticResponse>> OrderStatistic(int year)
         {
-            var result = await _orderRepo.OrderStatistic(year);
-            int targetYear = 2025;
+            var filter = Builders<Order>.Filter.Where(x => x.CreatedAt.Year == year);
+            var result = await _orderRepo.OrderStatistic(filter);
             var fullYearData = Enumerable.Range(1, 12).Select(month =>
             {
                 var existing = result.FirstOrDefault(x =>
-                    x["year"].AsInt32 == targetYear && x["month"].AsInt32 == month);
+                    x.Year == year && x.Month == month);
 
-                return new BsonDocument
+                return new OrderStatisticResponse
                 {
-                    { "Year", targetYear },
-                    { "Month", month },
-                    { "TotalOrders", existing?["totalOrders"] ?? 0 },
-                    { "TotalRevenue", existing?["totalRevenue"] ?? 0 }
+                    Year = year,
+                    Month = month,
+                    TotalOrders = existing?.TotalOrders ?? 0,
+                    TotalRevenue = existing?.TotalRevenue ?? 0
                 };
             }).ToList();
-            var data = fullYearData.Select(doc => BsonSerializer.Deserialize<OrderStatisticResponse>(doc)).ToList();
-            return data;
+            
+            return fullYearData;
         }
-
+        
         public async Task SaveLinkPayment(string id, string link)
         {
             await _orderRepo.Update(id, x => x.LinkPayment, link);

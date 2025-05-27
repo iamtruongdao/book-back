@@ -13,6 +13,7 @@ namespace BackEnd.services
     public interface IProductService
     {
           Task<CreateProductDTO?> AddProduct( CreateProductDTO product);
+          Task<long> CountProduct();
           Task<List<CreateProductDTO>?> AddProductMany( List<CreateProductDTO> product);
          Task<DeleteResult> DeleteProduct(string id);
          Task<ReplaceOneResult> UpdateProduct( UpdateProductDTO product);

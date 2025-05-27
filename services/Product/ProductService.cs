@@ -184,5 +184,10 @@ namespace BackEnd.services
             var convert = products.Select(doc => BsonSerializer.Deserialize<ProductDTO>(doc)).ToList();
             return new PaginatedList<ProductDTO>(convert, (int)totalPage, pageNumber, pageSize);
         }
+
+        public async Task<long> CountProduct()
+        {
+            return await _productRepo.CountProduct();
+        }
     }
 }

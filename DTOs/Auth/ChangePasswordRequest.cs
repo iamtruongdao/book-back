@@ -9,10 +9,9 @@ namespace BackEnd.DTOs.Auth
     public class ChangePasswordRequest
     {
         [Required]
-        public string? UserId { get; set; }
+        public string? Email { get; set; }
         [Required]
         public string? Password { get; set; }
-        [Required]
-        public string? NewPassword { get; set; }
+        public string? Otp { get; set; }
     }
 }

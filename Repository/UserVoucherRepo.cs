@@ -11,8 +11,9 @@ namespace BackEnd.Repository
     public interface IUserDiscountRepository
     {
         Task<UserDiscount> Create(UserDiscount data);
-        Task<UserDiscount> FindByDiscountId(string discountId);
-        Task<List<BsonDocument>> GetUserVouchers(string userId);
+        Task<UserDiscount> FindByDiscountId(string discountId, string userId);
+        Task<(List<BsonDocument>, int)> GetUserVouchers(int pageSize, int pageNumber, string userId);
+        Task<DeleteResult> Delete(string id);
         // Define methods for the repository
     }
     public class UserVoucherRepo :IUserDiscountRepository
@@ -30,17 +31,24 @@ namespace BackEnd.Repository
             return data;
         }
 
-        public Task<UserDiscount> FindByDiscountId(string discountId)
+        public async Task<DeleteResult> Delete(string id)
         {
-            return _userVouchers.Find(x => x.DiscountId == discountId).FirstOrDefaultAsync();
+            return await _userVouchers.DeleteOneAsync(x => x.Id == id);
         }
 
-        public async Task<List<BsonDocument>> GetUserVouchers(string userId)
+        public Task<UserDiscount> FindByDiscountId(string discountId,string userId)
         {
-            return await _userVouchers
-                .Aggregate()
-                .Match(Builders<UserDiscount>.Filter.Eq(x => x.UserId, userId)).Lookup("Discounts", "DiscountId", "_id", "discounts")
-                .ToListAsync();
+            return _userVouchers.Find(x => x.DiscountId == discountId && x.UserId == userId).FirstOrDefaultAsync();
+        }
+
+        public async Task<(List<BsonDocument>, int)> GetUserVouchers(int pageSize, int pageNumber, string userId)
+        {
+            var total = await _userVouchers.CountDocumentsAsync(x => x.UserId == userId);
+            var result = await _userVouchers
+               .Aggregate()
+               .Match(Builders<UserDiscount>.Filter.Eq(x => x.UserId, userId)).Lookup("Discounts", "DiscountId", "_id", "discounts").Project(BsonDocument.Parse(@"{Discount:{$arrayElemAt:['$discounts',0]  }}")).Skip((pageNumber - 1) * pageSize).Limit(pageSize)
+               .ToListAsync();
+            return (result, (int)total);  
         }
     }
 }

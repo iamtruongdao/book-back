@@ -1,4 +1,5 @@
 
+using System.Security.Claims;
 using BackEnd.DTOs.Cart;
 using BackEnd.models;
 using BackEnd.services;
@@ -43,9 +44,10 @@ namespace BackEnd.controllers
         [HttpGet("user")]
         [Authorize(Roles = nameof(ROLE.User))]
         
-        public IActionResult GetCart([FromQuery] string user_id)
+        public IActionResult GetCart()
         {
-            var cart = _cartService.GetCart(user_id);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var cart = _cartService.GetCart(userId!);
             return Ok(new {Code = 0,Message = "ok",Data = cart});
         }
     }

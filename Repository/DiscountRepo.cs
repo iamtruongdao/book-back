@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BackEnd.models;
 using BackEnd.Viewmodel;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace BackEnd.Repository
@@ -15,7 +16,7 @@ namespace BackEnd.Repository
         Task<UpdateResult> Update(FilterDefinition<Discount> filter, UpdateDefinition<Discount> update);
         Task<ReplaceOneResult> Replace(Discount discount);
         Task<Discount> CreateDiscount(Discount discount);
-        Task<PaginatedList<Discount>> GetAllDiscounts(int pageSize, int pageNumber);
+        Task<(List<BsonDocument>,int)> GetAllDiscounts(int pageSize, int pageNumber);
         Task<DeleteResult> DeleteDiscount(string id);
     }
     public class DiscountRepo : IDiscountRepository
@@ -52,14 +53,14 @@ namespace BackEnd.Repository
             return await _discounts.Find(d => d.Code == code).FirstOrDefaultAsync();
         }
 
-        public async Task<PaginatedList<Discount>> GetAllDiscounts(int pageSize, int pageNumber)
+        public async Task<(List<BsonDocument>,int)> GetAllDiscounts(int pageSize, int pageNumber)
         {
             var totalCount = await _discounts.CountDocumentsAsync(_ => true);
-            var result = await _discounts.Find(_ => true)
+            var result = await _discounts.Aggregate().Lookup("Products","ProductIds","_id","Products")
                .Skip(pageSize * (pageNumber - 1))
                .Limit(pageSize)
                .ToListAsync();
-            return new PaginatedList<Discount>(result, (int)totalCount, pageNumber, pageSize);
+            return (result,(int)totalCount);
         }
 
         public Task<ReplaceOneResult> Replace(Discount discount)

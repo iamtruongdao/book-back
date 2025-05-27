@@ -13,15 +13,16 @@ namespace BackEnd.Repository
     {
         Task<List<Order>> GetOrder();
         Task<Order> GetOrderById(string id);
-        Task<List<Order>> FindByState(string user_id, OrderState state);
-        Task<List<Order>> FindByUserId(string user_id);
+        Task<PaginatedList<Order>> FindByState(int pageNumber,int pageSize,string user_id, OrderState state);
+        Task<PaginatedList<Order>> FindByPaymentState(int pageNumber,int pageSize,string user_id, PaymentStatus state);
+        Task<PaginatedList<Order>> FindByUserId(int pageNumber,int pageSize, string user_id);
         Task<Order> FindByOrderCode(string orderCode);
         Task<Order> UpdateStatus(string id, OrderState status);
         Task Insert(Order order);
         Task<Order> Update<TField>(string id, Expression<Func<Order, TField>> filed, TField value);
-        List<DashBoardResponse> GetOrderStatusCount();
+        Task<List<DashBoardResponse>> GetOrderStatusCount();
         Task<PaginatedList<Order>> Filter(int pageSize, int pageNumber, FilterDefinition<Order> filter);
-        Task<List<BsonDocument>> OrderStatistic(int year);
+        Task<List<OrderStatisticResponse>> OrderStatistic(FilterDefinition<Order> filter);
     }
     public class OrderRepo : IOrderRepository
     {
@@ -44,14 +45,34 @@ namespace BackEnd.Repository
             return await _order.Find(x => x.OrderCode == orderCode).FirstOrDefaultAsync();
         }
 
-        public async Task<List<Order>> FindByState(string user_id,OrderState state)
+        public async Task<PaginatedList<Order>> FindByPaymentState(int pageNumber, int pageSize, string user_id, PaymentStatus state)
         {
-            return await _order.Find(x => x.UserId == user_id && x.OrderStatus == state).ToListAsync();
+            var total = _order.Find(x => x.UserId == user_id && x.PaymentStatus == state).CountDocuments();
+            var result = await _order.Find(x => x.UserId == user_id && x.PaymentStatus == state)
+                .Skip((pageNumber - 1) * pageSize)
+                .Limit(pageSize)
+                .ToListAsync();
+            return new PaginatedList<Order>(result, (int)total, pageNumber, pageSize);
         }
 
-        public async Task<List<Order>> FindByUserId(string user_id)
+        public async Task<PaginatedList<Order>> FindByState(int pageNumber,int pageSize,string user_id,OrderState state)
         {
-            return await _order.Find(x => x.UserId == user_id).ToListAsync();
+            var total = await _order.Find(x => x.UserId == user_id && x.OrderStatus == state).CountDocumentsAsync();
+            var result = await _order.Find(x => x.UserId == user_id && x.OrderStatus == state)
+                .Skip((pageNumber - 1) * pageSize)
+                .Limit(pageSize)
+                .ToListAsync();
+            return new PaginatedList<Order>(result, (int)total, pageNumber, pageSize);
+        }
+
+        public async Task<PaginatedList<Order>> FindByUserId(int pageNumber,int pageSize, string user_id)
+        {
+            var result = await _order.Find(x => x.UserId == user_id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Limit(pageSize)
+                .ToListAsync();
+            var total = await _order.Find(x => x.UserId == user_id).CountDocumentsAsync();
+            return new PaginatedList<Order>(result, (int)total, pageNumber, pageSize);
         }
 
         public async Task<List<Order>> GetOrder()
@@ -65,14 +86,18 @@ namespace BackEnd.Repository
 
         }
 
-        public List<DashBoardResponse> GetOrderStatusCount()
+        public async Task<List<DashBoardResponse>> GetOrderStatusCount()
         {
-            var orderList = _order.AsQueryable().GroupBy(x => x.OrderStatus).Select(g => new
-            DashBoardResponse
+            var orderList = await _order.Aggregate()
+            .Match(x => x.CreatedAt.Year == DateTime.Now.Year && 
+                        x.CreatedAt.Month == DateTime.Now.Month)
+            .Group(x => x.OrderStatus, g => new DashBoardResponse
             {
                 Status = g.Key.ToString(),
                 Count = g.Count()
-            }).ToList();
+            })
+            .SortByDescending(x => x.Count)
+            .ToListAsync();
             return orderList;
         }
 
@@ -81,34 +106,22 @@ namespace BackEnd.Repository
             await _order.InsertOneAsync(order);
         }
 
-        public async Task<List<BsonDocument>> OrderStatistic(int yearToFilter)
+        public async Task<List<OrderStatisticResponse>> OrderStatistic(FilterDefinition<Order> filter)
         {
             // 1. Lấy dữ liệu nhóm theo tháng/năm
-            var groupedData = await _order.Aggregate().Match(new BsonDocument
-            {
-                { "$expr", new BsonDocument("$eq", new BsonArray { new BsonDocument("$year", "$CreatedAt"), yearToFilter }) }
+            var fluentResult = await _order.Aggregate()
+            .Match(filter)
+            .Group(x => new { 
+                Year = x.CreatedAt.Year, 
+                Month = x.CreatedAt.Month 
+            }, g => new OrderStatisticResponse{
+                Year = g.Key.Year,
+                Month = g.Key.Month,
+                TotalOrders = g.Count(),
+                TotalRevenue = g.Sum(x => x.OrderStatus == OrderState.Delivered ? x.OrderCheckout!.TotalApplyDiscount : 0)
             })
-                .Group(new BsonDocument
-                {
-                    { "_id", new BsonDocument {
-                        { "year", new BsonDocument("$year", "$CreatedAt") },
-                        { "month", new BsonDocument("$month", "$CreatedAt") }
-                    }},
-                    { "totalOrders", new BsonDocument("$sum", 1) },
-                    { "totalRevenue", new BsonDocument("$sum", "$OrderCheckout.TotalApplyDiscount") }
-                })
-                .Project(new BsonDocument
-                {
-                    { "_id", 0 },
-                    { "year", "$_id.year" },
-                    { "month", "$_id.month" },
-                    { "totalOrders", 1 },
-                    { "totalRevenue", 1 }
-                })
-                .ToListAsync();
-            return groupedData;
-            // 2. Bổ sung các tháng không có dữ liệu
-           
+            .ToListAsync();
+            return fluentResult;
 
         }
 

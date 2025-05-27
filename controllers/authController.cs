@@ -32,7 +32,7 @@ namespace BackEnd.controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var result = await _authService.Login(request);
-            Response.Cookies.Append("act", result.token!.AccessToken!,new CookieOptions
+            Response.Cookies.Append("act", result.token!.AccessToken!, new CookieOptions
             {
                 Expires = DateTime.Now.AddDays(7),
                 Secure = true,
@@ -40,7 +40,7 @@ namespace BackEnd.controllers
                 SameSite = SameSiteMode.None
 
             });
-            Response.Cookies.Append("rft", result.token!.RefreshToken!,new CookieOptions
+            Response.Cookies.Append("rft", result.token!.RefreshToken!, new CookieOptions
             {
                 Expires = DateTime.Now.AddDays(7),
                 HttpOnly = true,
@@ -48,20 +48,20 @@ namespace BackEnd.controllers
                 IsEssential = true,
                 SameSite = SameSiteMode.None
             });
-            return Ok(new {Code = 0, message = "login success", data = result });
+            return Ok(new { Code = 0, message = "login success", data = result });
         }
         [HttpPost("logout")]
         public ActionResult Logout()
         {
-             var options = new CookieOptions
+            var options = new CookieOptions
             {
                 Expires = DateTimeOffset.UnixEpoch,
                 SameSite = SameSiteMode.None,
                 Secure = true,
             };
-            Response.Cookies.Delete("act",options);
-            Response.Cookies.Delete("rft",options);
-            return Ok(new {Code = 0, message = "logout success" });
+            Response.Cookies.Delete("act", options);
+            Response.Cookies.Delete("rft", options);
+            return Ok(new { Code = 0, message = "logout success" });
         }
         [HttpPost("register")]
         [ProducesResponseType((int)HttpStatusCode.OK, Type = typeof(RegisterResponse))]
@@ -76,7 +76,7 @@ namespace BackEnd.controllers
         {
             Request.Cookies.TryGetValue("rft", out string? rft);
             var result = _authService.RefreshToken(rft);
-            Response.Cookies.Append("act", result.AccessToken!,new CookieOptions
+            Response.Cookies.Append("act", result.AccessToken!, new CookieOptions
             {
                 Expires = DateTime.Now.AddDays(7),
                 IsEssential = true,
@@ -84,7 +84,7 @@ namespace BackEnd.controllers
                 SameSite = SameSiteMode.None
 
             });
-            Response.Cookies.Append("rft", result.RefreshToken!,new CookieOptions
+            Response.Cookies.Append("rft", result.RefreshToken!, new CookieOptions
             {
                 Expires = DateTime.Now.AddDays(7),
                 HttpOnly = true,
@@ -92,7 +92,7 @@ namespace BackEnd.controllers
                 Secure = true,
                 SameSite = SameSiteMode.None
             });
-             return Ok(new AuthenticateResponse
+            return Ok(new AuthenticateResponse
             {
                 AccessToken = result.AccessToken,
                 RefreshToken = result.RefreshToken
@@ -104,44 +104,33 @@ namespace BackEnd.controllers
         {
             var user_id = Request.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var user = await _authService.GetUser(user_id!);
-            return Ok(new {Code = 0,message = "ok", data = user });
+            return Ok(new { Code = 0, message = "ok", data = user });
         }
         [HttpGet("get/all-user")]
-        // [Authorize(Roles = nameof(ROLE.Admin))]
-        public  async Task<ActionResult> GetAllUser([FromQuery] int pageSize,int pageNumber)
+        [Authorize(Roles = nameof(ROLE.Admin))]
+        public async Task<ActionResult> GetAllUser([FromQuery] int pageSize, int pageNumber)
         {
-            var user = await  _authService.GetAllUser(pageSize,pageNumber);
-            return Ok(new {Code = 0,mesage ="ok",  data = user });
+            var user = await _authService.GetAllUser(pageSize, pageNumber);
+            return Ok(new { Code = 0, mesage = "ok", data = user });
         }
         [HttpPost("change-password")]
         [Authorize]
         public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordRequest data)
         {
-            try
-            {
-                var result = await _authService.ChangePassword(data);
-                if (result)
-                {
-                    return Ok(new { message = "doi mk thanh cong" });
-                }
-                return BadRequest(new { message = "doi mk k thanh cong" });
-            }
-            catch (System.Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            await _authService.ChangePassword(data);
+            return Ok(new { Code = 0, message = "doi mk thanh cong" });
         }
 
         [HttpPost("send-otp")]
         public async Task<ActionResult> SendOtp([FromBody] SendOtpRequest data)
         {
-            
-                await _authService.SendOTP(data);
-                return Ok(new {Code = 0, Message = "gửi otp thanh công vui lòng check email" });
-            
+
+            await _authService.SendOTP(data);
+            return Ok(new { Code = 0, Message = "gửi otp thanh công vui lòng check email" });
+
         }
         [HttpPost("verify-otp")]
-         [Authorize]
+        [Authorize]
         public async Task<ActionResult> VerifyOtp([FromBody] SendOtpRequest data)
         {
 
@@ -157,18 +146,26 @@ namespace BackEnd.controllers
             return Ok(new { Code = 0, message = "cap nhat thanh cong" });
         }
         [HttpPost("reset-password")]
-    
+
         public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordRequest data)
         {
             await _authService.ResetPassword(data);
             return Ok(new { Code = 0, message = "reset success" });
         }
+
         [HttpPost("lock")]
         [Authorize(Roles = nameof(ROLE.Admin))]
         public async Task<ActionResult> LockOrUnlock([FromBody] LockOrUnlockRequest data)
         {
             var result = await _authService.LockOrUnlock(data);
-            return Ok(new {Code = 0,  message = result ? "khóa tài khoản thành công" : "mở khóa tài khoản thành công" });
+            return Ok(new { Code = 0, message = result ? "khóa tài khoản thành công" : "mở khóa tài khoản thành công" });
+        }
+        [HttpGet("count-user")]
+        [Authorize(Roles = nameof(ROLE.Admin))]
+        public async Task<ActionResult<int>> CountUser()
+        {
+            var count = await _authService.CountUser();
+            return Ok(new { Code = 0, message = "ok", data = count });
         }
     }
 }

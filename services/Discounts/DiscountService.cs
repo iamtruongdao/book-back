@@ -8,6 +8,7 @@ using BackEnd.Exceptions;
 using BackEnd.models;
 using BackEnd.Repository;
 using BackEnd.Viewmodel;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 namespace BackEnd.services.Discounts
@@ -31,7 +32,7 @@ namespace BackEnd.services.Discounts
                 throw new BadRequestException("Discount with this code already exists");
             }
             var result = await _discountRepository.CreateDiscount(_mapper.Map<Discount>(discount));
-            return result;
+            return result;  
         }
 
         public async Task<DeleteResult> DeleteDiscount(string id)
@@ -40,10 +41,11 @@ namespace BackEnd.services.Discounts
             return result;
         }
 
-        public async Task<PaginatedList<Discount>> GetAllDiscounts(int pageSize, int pageNumber)
+        public async Task<PaginatedList<DiscountDto>> GetAllDiscounts(int pageSize, int pageNumber)
         {
-            var result = await _discountRepository.GetAllDiscounts(pageSize, pageNumber);
-            return result;
+            var (result,total) = await _discountRepository.GetAllDiscounts(pageSize, pageNumber);
+            var convert = result.Select(doc => BsonSerializer.Deserialize<DiscountDto>(doc)).ToList();
+            return new PaginatedList<DiscountDto>(convert,total,pageNumber,pageSize);
         }
 
         public async Task<GetAmountResponse> GetAmount(GetAmountRequest request)
@@ -61,28 +63,21 @@ namespace BackEnd.services.Discounts
                 {
                     var usageCount = discount.UserUsage.Count(x => x == userUsage);
                     if (usageCount >= discount.MaxUsagePerUser) 
-                        throw new BadRequestException("voucher usage limit reached");
+                            throw new BadRequestException("voucher usage limit reached");
                 }
             }
 
             decimal totalPrice = 0;
-            if (discount.MinOrderValue > 0 || discount.ApplyTo == ApplyTo.Specific)
+            if (discount.MinOrderValue > 0 )
             {
                 // Calculate total price based on ApplyTo
                 if (discount.ApplyTo == ApplyTo.Specific)
                 {
-                    // Only include items whose ProductId is in discount.ProductIds
-                    totalPrice = request.Items!
-                        .Where(item => discount.ProductIds.Contains(item.ProductId!))
-                        .Aggregate((decimal)0, (acc, item) => acc + item.Price * item.Quantity);
+                    var isExist = request.Items!.Any(x => discount.ProductIds.Contains(x.ProductId!));
+                    if (!isExist) throw new BadRequestException("sản phẩm của bạn k nằm trong danh mục khuyến mãi"); 
                 }
-                else // ApplyTo.All
-                {
-                    totalPrice = request.Items!
-                        .Aggregate((decimal)0, (acc, item) => acc + item.Price * item.Quantity);
-                }
-
-                if (discount.MinOrderValue > 0 && totalPrice < discount.MinOrderValue) 
+                totalPrice = request.Items!.Aggregate((decimal)0, (acc, item) => acc + item.Price * item.Quantity);
+                if (totalPrice < discount.MinOrderValue) 
                     throw new BadRequestException($"voucher requires min order value of {discount.MinOrderValue}");
             }
 

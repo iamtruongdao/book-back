@@ -52,7 +52,6 @@ namespace BackEnd.controllers
         public async Task<ActionResult> OrderStatistic([FromQuery] int year)
         {
             var res = await _orderService.OrderStatistic(year);
-
             return Ok(new { Code = 0, message = "ok", data = res });
         }
         [HttpGet("user")]
@@ -62,10 +61,10 @@ namespace BackEnd.controllers
             return Ok(new { Code = 0, data = listOrder, message = "ok" });
         }
         [HttpGet("get-order")]
-        public async Task<ActionResult> GetOrderByUserId([FromQuery] OrderState? status)
+        public async Task<ActionResult> GetOrderByUserId([FromQuery] int pageNumber,int pageSize, OrderState? status,PaymentStatus? paymentStatus)
         {
-            var id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var order = await _orderService.GetOrderByUserId(id,status);
+            var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var order = await _orderService.GetOrderByUserId(pageNumber,pageSize,id,status,paymentStatus);
             return Ok(new { Code = 0, data = order, message = "ok" });
         }
          [HttpGet("paginate")]
@@ -89,9 +88,9 @@ namespace BackEnd.controllers
         }
         [HttpGet("dashboard")]
         [Authorize(Roles = nameof(ROLE.Admin))]
-        public ActionResult DashBoard()
+        public async Task<ActionResult> DashBoard()
         {
-            var order = _orderService.DashBoard();
+            var order = await _orderService.DashBoard();
             return Ok(new {Code = 0,message = "ok", data = order });
         }
         [HttpPost("create-payment")]

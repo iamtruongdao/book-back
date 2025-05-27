@@ -4,20 +4,14 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
-
 using AutoMapper;
 using BackEnd.DTOs.Auth;
-
 using BackEnd.DTOs.User;
 using BackEnd.models;
 using BackEnd.services.Email;
 using BackEnd.Viewmodel;
-
 using BackEnd.Exceptions;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 
 namespace BackEnd.services
@@ -25,7 +19,6 @@ namespace BackEnd.services
     public class AuthService : IAuthService
     {
         private readonly IMapper _mapper;
-
         private readonly UserManager<User> _userManager;
         private readonly IEmailService _emailService;
         private readonly ITokenService _tokenService;
@@ -37,15 +30,24 @@ namespace BackEnd.services
             _userManager = userManager;
             _emailService = emailService;
         }
-
-
-
         public async Task<bool> ChangePassword(ChangePasswordRequest data)
         {
-            var user = await _userManager.FindByIdAsync(data.UserId!);
+            var user = await _userManager.FindByEmailAsync(data.Email!);
             if (user is null) throw new Exception("user is not Exist");
-            var result = await _userManager.ChangePasswordAsync(user, data.Password!, data.NewPassword!);
-            return result.Succeeded;
+            await this.VerifyOtp(new SendOtpRequest
+            {
+                Email = data.Email,
+                Otp = data.Otp
+            });
+            await _userManager.RemovePasswordAsync(user);
+            await _userManager.AddPasswordAsync(user, data.Password!);
+            return true;
+        }
+
+        public async Task<int> CountUser()
+        {
+            var usersInRole = await _userManager.GetUsersInRoleAsync(ROLE.User.ToString());
+            return usersInRole.Count;
         }
 
         public async Task<PaginatedList<UserResponse>> GetAllUser(int limit,int pageNumber)
@@ -55,7 +57,6 @@ namespace BackEnd.services
             foreach (var item in list)
             {
                 item.Roles = (await _userManager.GetRolesAsync(item)).ToList();
-
             }
             var userRes = _mapper.Map<List<UserResponse>>(list);
 
@@ -65,6 +66,9 @@ namespace BackEnd.services
         public async Task<UserResponse> GetUser(string user_id)
         {
             var user = await _userManager.FindByIdAsync(user_id);
+            if (user is null) throw new UnAuthorizeException("user not found,please login");
+            var role = await _userManager.GetRolesAsync(user);
+            user.Roles = role.ToList();
             return _mapper.Map<UserResponse>(user);
         }
 
@@ -77,7 +81,6 @@ namespace BackEnd.services
                 await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
                 return true;
             }
-
             await _userManager.SetLockoutEndDateAsync(user, null);
             return false;
         }
@@ -97,7 +100,7 @@ namespace BackEnd.services
             var checkPassword = await _userManager.CheckPasswordAsync(userExist, request.Password!);
             if (!checkPassword) 
             {
-             throw new NotFoundException("Invalid Email/Password");
+                throw new NotFoundException("Invalid Email/Password");
 
             };  
             var claims = new List<Claim>{
@@ -172,12 +175,11 @@ namespace BackEnd.services
         {
             var user = await _userManager.FindByEmailAsync(data.Email!);
             if (user is null) throw new NotFoundException("user not found");
-         
             await _userManager.RemovePasswordAsync(user);
             await _userManager.AddPasswordAsync(user, data.Password!);
             return true;
         }
-
+       
         public async Task SendOTP(SendOtpRequest data)
         {
             var user = await _userManager.FindByEmailAsync(data.Email!);
@@ -186,7 +188,7 @@ namespace BackEnd.services
             user.Otp = otp.ToString();
             user.OtpExprire = DateTime.Now.AddMinutes(5);
             await _userManager.UpdateAsync(user);
-            await _emailService.Sendmail(data.Email!, "Reset password", $"Otp của bạn là {otp}");
+            await _emailService.Sendmail(data.Email!, "Change  password", $"Otp của bạn là {otp}");
         }
         public async Task UpdateInfor(UpdateInfoRequest data)
         {
@@ -197,7 +199,6 @@ namespace BackEnd.services
             user.PhoneNumber = data.PhoneNumber;
             user.Address = data.Address;
             await _userManager.UpdateAsync(user);
-            
         }
 
         public async Task VerifyOtp(SendOtpRequest data)
@@ -208,7 +209,7 @@ namespace BackEnd.services
             {
                 throw new NotFoundException("otp invalid or expire time");
             }
-          
+            if (user.OtpExprire > DateTime.Now) throw new BadRequestException("otp  expire time");
         }
     }
 }

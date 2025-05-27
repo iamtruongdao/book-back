@@ -18,7 +18,6 @@ namespace BackEnd.DTOs.UserDiscounts
         [BsonRepresentation(BsonType.ObjectId)]
         public string? UserId { get; set; }
         public bool IsUsed { get; set; }
-        [BsonElement("discounts")]
-        public List<DiscountDto>? Discounts { get; set; }
+        public DiscountDto? Discount { get; set; }
     }
 }

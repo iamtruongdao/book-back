@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BackEnd.DTOs.Product;
 using BackEnd.models;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
@@ -29,6 +30,7 @@ namespace BackEnd.DTOs.Discounts
         public List<string>? UserUsage { get; set; } 
         [BsonRepresentation(BsonType.ObjectId)]
         public List<string>? ProductIds { get; set; }
+        public List<ProductDTO>? Products { get; set; }
         public int MaxUsage { get; set; }
         public int UseCount { get; set; }
         public int MaxUsagePerUser { get; set; }

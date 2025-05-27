@@ -23,8 +23,9 @@ namespace BackEnd.services
         Task SendOTP(SendOtpRequest data);
         Task UpdateInfor(UpdateInfoRequest data);
         Task<bool> LockOrUnlock(LockOrUnlockRequest data);
-        Task<PaginatedList<UserResponse>> GetAllUser(int limit,int pageNumber);
+        Task<PaginatedList<UserResponse>> GetAllUser(int limit, int pageNumber);
         Task VerifyOtp(SendOtpRequest otp);
+        Task<int> CountUser();
        
     }
 }

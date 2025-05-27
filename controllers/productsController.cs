@@ -110,5 +110,11 @@ namespace BackEnd.controllers
             var products = await _productService.GetTopProduct(year, pageSize, pageNumber);
             return Ok(new { Code = 0, message = "ok", data = products });
         }
+        [HttpGet("count")]
+        public async Task<ActionResult<long>> CountProduct()
+        {
+            var count = await _productService.CountProduct();
+            return Ok(new { Code = 0, message = "ok", data = count });
+        }
     }
 }

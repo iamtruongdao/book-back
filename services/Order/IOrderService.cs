@@ -15,12 +15,12 @@ namespace BackEnd.services
         Task<AddOrderResponse> AddOrder(AddOrderDTO data);
         Task<Order> UpdateStatus(UpdateStatusDTO id);
         Task<List<Order>> GetOrder();
-        Task<List<Order>> GetOrderByUserId(string? id, OrderState? state);
+        Task<PaginatedList<Order>> GetOrderByUserId(int pageNumber,int pageSize, string? id, OrderState? state,PaymentStatus? paymentStatus);
         Task<Order> GetOrderById(string id);
         Task<Order> UpdateStatusPayment(string id);
         Task SaveLinkPayment(string id, string link);
         Task<PaginatedList<Order>> Filter(int pageSize, int pageNumber, OrderState? state);
-        List<DashBoardResponse> DashBoard();
+        Task<List<DashBoardResponse>> DashBoard();
         Task<Order> CancelOrder(UpdateStatusDTO id);
         Task<List<OrderStatisticResponse>> OrderStatistic(int year);
         

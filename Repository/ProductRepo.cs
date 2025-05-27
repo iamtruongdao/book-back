@@ -16,6 +16,7 @@ namespace BackEnd.Repository
         Task<Product> FindById(string id);
         Task<Product> FindBySlug(string slug);
         Task<Product> Create(Product category);
+        Task<long> CountProduct();
         Task<List<Product>> GetAllProducts();
         Task<List<Product>> GetLimit(int limit);
         Task<ReplaceOneResult> UpdateProduct(Product product);
@@ -31,6 +32,11 @@ namespace BackEnd.Repository
         {
             var db = client.GetDatabase(setting.DatabaseName);
             _product = db.GetCollection<Product>("Products");
+        }
+
+        public async Task<long> CountProduct()
+        {
+            return await _product.CountDocumentsAsync(_ => true);
         }
 
         public async Task<Product> Create(Product product)
@@ -75,6 +81,8 @@ namespace BackEnd.Repository
                 Avatar:1,
                 Slug:1,
                 Category: 1,
+                PageNumber:1,
+                Translator:1,
                 PublicDate:1,
                 Author:{$toString:'$Author'},
                 ProductDescription:1,   
