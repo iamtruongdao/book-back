@@ -5,8 +5,11 @@ using System.Threading.Tasks;
 
 namespace BackEnd.Exceptions
 {
-    public class UnAuthorizeException(string message) : Exception(message)
+    public class UnAuthorizeException : Exception
     {
-        
+        public UnAuthorizeException(string message) : base(message)
+        {
+            
+        }
     }
 }

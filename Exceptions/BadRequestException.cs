@@ -5,8 +5,10 @@ using System.Threading.Tasks;
 
 namespace BackEnd.Exceptions
 {
-    public class BadRequestException(string message) : Exception(message)
+    public class BadRequestException : Exception
     {
-        
+         public BadRequestException(string message) : base(message)
+        {
+        }
     }
 }
