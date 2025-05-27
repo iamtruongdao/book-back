@@ -3,3 +3,4 @@ obj/
 .fake
 .vscode
 appsettings.Development.json
+back.sln
