@@ -87,9 +87,10 @@ builder.Services.AddSwaggerGen(c =>
 });
 // cors
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+var corsUrls = builder.Configuration["CORS:Url"] ?? "";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(MyAllowSpecificOrigins,policy => policy.WithOrigins("http://localhost:3000","http://localhost:5173").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+    options.AddPolicy(MyAllowSpecificOrigins,policy => policy.WithOrigins("http://localhost:3000","http://localhost:5173",corsUrls).AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 });
 
 //Mapper
