@@ -29,6 +29,7 @@ using BackEnd.services.Discounts;
 using BackEnd.services.UserDiscounts;
 
 var builder = WebApplication.CreateBuilder(args); 
+builder.Configuration.AddEnvironmentVariables();
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -107,9 +108,9 @@ builder.Services.AddSingleton<IMongoClient>(s => new MongoClient(mongoDbSettings
 builder.Services.AddScoped<ErrorMiddleware>();
 //SignalR
 builder.Services.AddSignalR().AddJsonProtocol().AddHubOptions<NotificationHub>(options =>
-    {
-        options.EnableDetailedErrors = true;  // Bật chế độ lỗi chi tiết khi cần
-    });;
+{
+    options.EnableDetailedErrors = true;  // Bật chế độ lỗi chi tiết khi cần
+});;
 //Authentication
 IdentityModelEventSource.ShowPII = true;
 builder.Services.AddIdentityMongoDbProvider<User, Role, ObjectId>(
