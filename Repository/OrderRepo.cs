@@ -127,7 +127,7 @@ namespace BackEnd.Repository
 
         public async Task<Order> Update<TField>(string id, Expression<Func<Order, TField>> filed, TField value)
         {
-           return  await _order.FindOneAndUpdateAsync(x => x.Id == id, Builders<Order>.Update.Set(filed, value),new FindOneAndUpdateOptions<Order>
+           return  await _order.FindOneAndUpdateAsync<Order>(x => x.Id == id, Builders<Order>.Update.Set(filed, value),new FindOneAndUpdateOptions<Order>
              {
                 ReturnDocument = ReturnDocument.After
                 
