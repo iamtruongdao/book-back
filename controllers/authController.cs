@@ -92,11 +92,11 @@ namespace BackEnd.controllers
                 Secure = true,
                 SameSite = SameSiteMode.None
             });
-            return Ok(new AuthenticateResponse
+            return Ok(new {Code = 0 ,message = "ok",data = new AuthenticateResponse
             {
                 AccessToken = result.AccessToken,
                 RefreshToken = result.RefreshToken
-            });
+            }});
         }
         [HttpGet("get/user")]
         [Authorize]

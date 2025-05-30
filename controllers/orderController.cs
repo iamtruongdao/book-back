@@ -19,12 +19,13 @@ namespace BackEnd.controllers
     public class orderController : ControllerBase
     {
         private readonly IOrderService _orderService;
-        private readonly IVNPayService _vNPayService
-        ;
-        public orderController(IOrderService orderService, IVNPayService vNPayService)
+        private readonly IVNPayService _vNPayService;
+        private readonly IConfiguration _configuration;
+        public orderController(IOrderService orderService, IVNPayService vNPayService, IConfiguration configuration)
         {
             _orderService = orderService;
             _vNPayService = vNPayService;
+            _configuration = configuration;
         }
 
         [HttpPost("checkout")]
@@ -101,13 +102,16 @@ namespace BackEnd.controllers
             await _orderService.SaveLinkPayment(request.OrderId!, url);
             return Ok(new {Code = 0 ,message = "ok" ,data = new {url} });
         }
+        [AllowAnonymous]
         [HttpGet("payment_callback")]
 
         public async Task<ActionResult> PaymentCallBack()
         {
             var url = _vNPayService.VNPayExcute(Request.Query);
             await _orderService.UpdateStatusPayment(url.OrderId!);
-            return Redirect("http://localhost:5173/order/" + url.OrderId);
+            var feUrl = _configuration["ReturnUrl:Url"] ?? "http://localhost:5173/" ;
+            var returnUrl = feUrl + "order/";
+            return Redirect(returnUrl + url.OrderId);
         }
 
     }

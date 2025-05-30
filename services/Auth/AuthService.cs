@@ -111,6 +111,7 @@ namespace BackEnd.services
                 new Claim(ClaimTypes.Name,userExist.FullName!)
             };
             var roles = await _userManager.GetRolesAsync(userExist);
+            userExist.Roles = roles.ToList();
             var rolesClaims = roles.Select(role => new Claim(ClaimTypes.Role, role));
             claims.AddRange(rolesClaims);
             var accessToken = _tokenService.GenerateAccessToken(claims);
