@@ -53,7 +53,8 @@ namespace BackEnd.services
         public CartResponse GetCart(string user_id)
         {
            var cartList = _cartRepo.GetCart(user_id);
-           if(cartList.Count() == 0) throw new NotFoundException("Cart not found");
+           if (cartList == null || !cartList.Any())
+            return new CartResponse();
             var cartRes = cartList.Select(doc => BsonSerializer.Deserialize<CartResponse>(doc)).First();
             return cartRes;
         }

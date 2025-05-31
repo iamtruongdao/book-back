@@ -4,3 +4,4 @@ obj/
 .vscode
 appsettings.Development.json
 back.sln
+BackEnd.csproj

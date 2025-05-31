@@ -19,6 +19,7 @@ namespace BackEnd.models
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
         public string? ProductName { get; set; } 
+        [BsonRepresentation(BsonType.Decimal128)]
         public decimal ProductPrice { get; set; }
         public float Discount { get; set; }
         public int ProductQuantity { get; set; }

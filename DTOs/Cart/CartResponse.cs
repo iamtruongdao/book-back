@@ -14,7 +14,7 @@ namespace BackEnd.DTOs.Cart
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
         public string? UserId { get; set; }
-        public List<CartProductRes>? CartProducts { get; set; }
+        public List<CartProductRes>? CartProducts { get; set; } = new List<CartProductRes>();
         public int CartCountProduct { get; set; }
     }
     public class CartProductRes : CartProductItem

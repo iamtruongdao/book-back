@@ -24,7 +24,6 @@ namespace BackEnd.models
         public string? OrderCode { get; set; }
         public string? TrackingNumber { get; set; }
         [BsonRepresentation(BsonType.String)]
-
         public PaymentStatus? PaymentStatus { get; set; }
         public string? LinkPayment { get; set; }
         public DateTime? DeleveredAt { get; set; }    
@@ -82,7 +81,5 @@ namespace BackEnd.models
         Shipping,
         Cancel,
         Delivered,
-       
-    
     }
 }

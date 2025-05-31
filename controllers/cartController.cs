@@ -42,7 +42,7 @@ namespace BackEnd.controllers
             return Ok(new {Code = 0,Message = "ok",Data = cart});
         }
         [HttpGet("user")]
-        [Authorize(Roles = nameof(ROLE.User))]
+        [Authorize]
         
         public IActionResult GetCart()
         {
