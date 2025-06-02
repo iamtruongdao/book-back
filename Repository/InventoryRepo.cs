@@ -10,6 +10,7 @@ namespace BackEnd.Repository
     public interface IInventoryRepository
     {
         Task<Inventory> Insert(Inventory inventory);
+        Task<UpdateResult> Refund(string id,int quantity );
         Task<UpdateResult> Update(FilterDefinition<Inventory> filter, UpdateDefinition<Inventory> update,bool isUpsert);
     }
     public class InventoryRepo : IInventoryRepository
@@ -24,6 +25,13 @@ namespace BackEnd.Repository
         {
             await _inventory.InsertOneAsync(inventory);
             return inventory;
+        }
+
+        public Task<UpdateResult> Refund(string id, int quantity)
+        {
+            var filter = Builders<Inventory>.Filter.Eq(i => i.ProductId, id);
+            var update = Builders<Inventory>.Update.Inc(i => i.Stock, quantity);
+            return Update(filter, update, false);
         }
 
         public async Task<UpdateResult> Update(FilterDefinition<Inventory> filter, UpdateDefinition<Inventory> update, bool isUpsert)

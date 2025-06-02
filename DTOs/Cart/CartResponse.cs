@@ -26,7 +26,7 @@ namespace BackEnd.DTOs.Cart
         public string? Slug { get; set; }
         public decimal ProductPrice { get; set; }
         public decimal Discount { get; set; }
-        public decimal DiscountPrice => ProductPrice - Discount;
+        public decimal DiscountPrice => ProductPrice - (Discount*ProductPrice) / 100;
         public string? Avatar { get; set; }
     }
 }

@@ -22,7 +22,6 @@ namespace BackEnd.helper
 {   
     public class MapperConfig:Profile
     {
-
         public MapperConfig()
         {
             CreateMap<ProductDTO, Product>();

@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.SignalR;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
+using Microsoft.Extensions.Caching.Memory;
 
 
 namespace BackEnd.services
@@ -35,7 +36,9 @@ namespace BackEnd.services
         private readonly IInventoryService _inventoryService;
         private readonly IHubContext<NotificationHub> _hubContext;
         private readonly IDiscountService _discountService;
-        public OrderService(ICartRepository cartRepo, IInventoryService inventoryService, IOrderRepository orderRepo, IProductRepository productRepo, IShipService shipService, IHubContext<NotificationHub> hubContext, INotificationRepo notificationRepo, IDiscountService discountService)
+        private readonly IInventoryRepository _inventoryRepo;
+        private readonly IMemoryCache _cache;
+        public OrderService(ICartRepository cartRepo, IInventoryService inventoryService, IOrderRepository orderRepo, IProductRepository productRepo, IShipService shipService, IHubContext<NotificationHub> hubContext, INotificationRepo notificationRepo, IDiscountService discountService, IMemoryCache cache, IInventoryRepository inventoryRepo)
         {
             _notificationRepo = notificationRepo;
             _hubContext = hubContext;
@@ -45,12 +48,9 @@ namespace BackEnd.services
             _shipService = shipService;
             _inventoryService = inventoryService;
             _discountService = discountService;
+            _cache = cache;
+            _inventoryRepo = inventoryRepo;
         }
-      
-        
-     
-
-
         public async Task<AddOrderResponse> AddOrder(AddOrderDTO data)
         {
             var (orderCheckout, orderProduct) = await this.Checkout(data.Checkout!);
@@ -95,6 +95,7 @@ namespace BackEnd.services
                 {
                     await _cartRepo.DeleteCart(data.Checkout.UserId!, item.Item!.ProductId!);
                 }
+                _cache.Remove($"cart_price_${data.Checkout.UserId}");
                 return new AddOrderResponse
                 {
                     IsCreated = true,
@@ -114,6 +115,17 @@ namespace BackEnd.services
         public async Task<Order> CancelOrder(UpdateStatusDTO data)
         {
             if (data.OrderId == null) throw new NotFoundException("đã xảy ra lỗi k tìm thấy đơn hàng");
+            var order = await _orderRepo.GetOrderById(data.OrderId);
+            if (order == null) throw new NotFoundException("đã xảy ra lỗi k tìm thấy đơn hàng");
+            foreach (var item in order.OrderItem!)
+            {
+                var quantity = item.Item!.Quantity!;
+                if (quantity > 0)
+                {
+                    var modify = await _inventoryRepo.Refund(item.Item!.ProductId!, quantity);
+                    if (modify.ModifiedCount == 0) throw new BadRequestException("refund inventory failed");
+                }
+            }
             return await _orderRepo.Update(data.OrderId, x => x.OrderStatus, OrderState.Cancel);
         }
 
@@ -121,6 +133,8 @@ namespace BackEnd.services
         {
             var cart = _cartRepo.FindById(checkout.CartId);
             if (cart is null) throw new NotFoundException("cart is not exists");
+            var cacheKey = $"cart_price_{checkout.UserId}";
+            var userPriceDict = _cache.Get<Dictionary<string, decimal>>(cacheKey);
             var totalCheckout = new OrderCheckout
             {
                 FeeShip = 0,
@@ -139,11 +153,15 @@ namespace BackEnd.services
                 if (product is null) throw new BadRequestException("product not found");
                 var quantity = item.Quantity;
                 var unitPrice = product.ProductPrice;
+                if (userPriceDict != null && userPriceDict.TryGetValue(item.ProductId!, out decimal lockedPrice))
+                {
+                    unitPrice = lockedPrice;
+                }
                 var itemTotalPrice = unitPrice * quantity;
                 totalPrice += itemTotalPrice;
                 if (product.Discount != 0)
                 {
-                    amount = (float)item.Quantity * (float)product.ProductPrice * product.Discount / 100;//giảm giá trên từng  sản phẩm
+                    amount = (float)item.Quantity * (float)unitPrice * product.Discount / 100;//giảm giá trên từng  sản phẩm
                     totalAmount += amount;
                 }
                 listOrder.Add(new OrderProduct
@@ -154,7 +172,7 @@ namespace BackEnd.services
                     {
                         Avatar = product.Avatar,
                         Discount = amount,
-                        Price = product.ProductPrice,
+                        Price = unitPrice,
                         ProductId = product.Id,
                         ProductName = product.ProductName,
                         Quantity = item.Quantity

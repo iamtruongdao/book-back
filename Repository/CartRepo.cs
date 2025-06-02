@@ -19,9 +19,6 @@ namespace BackEnd.Repository
         Task<Cart> DeleteCart(string user_id,string product_id);
         List<BsonDocument> GetCart(string user_id);
     }
-
-   
-
     public class CartRepo :  ICartRepository
     {
         private readonly IMongoCollection<Cart> _cart;
@@ -97,11 +94,7 @@ namespace BackEnd.Repository
                             in: {
                                 ProductName: '$$product.ProductName',
                                 ProductPrice: '$$product.ProductPrice',
-                                Discount: {$divide:[
-                                    {
-                                        $multiply:['$$product.ProductPrice','$$product.Discount']
-                                    },100]
-                                },
+                                Discount: '$$product.Discount',
                                 Avatar: '$$product.Avatar',
                                 Slug: '$$product.Slug',
                             }
